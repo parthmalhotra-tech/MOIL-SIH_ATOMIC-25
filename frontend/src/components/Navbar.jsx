@@ -17,12 +17,12 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-zenith-bg border-b border-zenith-border">
       <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-18 items-center justify-between">
-          {/* Logo - Red plus + MANGANAI */}
+          {/* Logo  */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zenith-accent">
-              <span className="text-white font-bold text-xl leading-none">+</span>
+               <img src="logo.png"></img>
             </div>
-            <span className="text-xl font-semibold tracking-wider uppercase text-white">MANGANAI</span>
+            <span className="text-xl font-semibold tracking-wider uppercase text-white">PRITHVIA</span>
           </div>
 
           {/* Navigation - Centered */}

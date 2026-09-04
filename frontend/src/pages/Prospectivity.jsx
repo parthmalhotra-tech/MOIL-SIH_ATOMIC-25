@@ -3,6 +3,8 @@ import { Search, Filter, MapPin, ChevronDown, X, Map, Layers, ArrowRight, Extern
 import { Link } from "react-router-dom";
 import ProspectivityMap from "../components/ProspectivityMap";
 import { prospectivityMockData, getProspectivityColor } from "../data/prospectivityData";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 /**
  * Prospectivity Intelligence Page
@@ -85,52 +87,8 @@ export default function Prospectivity() {
   return (
     <div className="min-h-screen bg-zenith-bg flex flex-col">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-zenith-bg border-b border-zenith-border">
-        <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex h-18 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zenith-accent">
-                <span className="text-white font-bold text-xl leading-none">+</span>
-              </div>
-              <span className="text-xl font-semibold tracking-wider uppercase text-white">MANGANAI</span>
-            </div>
+      <Navbar/>
 
-            <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
-              {[
-                { label: "Dashboard", href: "/" },
-                { label: "Prospectivity", href: "/prospectivity" },
-                { label: "Production", href: "#" },
-                { label: "Risk", href: "#" },
-                { label: "Recommendations", href: "#" },
-                { label: "Model & Data", href: "#" },
-              ].map((item) => {
-                const isActive = window.location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.label}
-                    to={item.href}
-                    className={`text-sm font-medium uppercase tracking-wide transition-colors duration-200 ${
-                      isActive ? "text-white" : "text-text-muted hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <Link
-                to="/prospectivity"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-zenith-bg font-semibold text-sm uppercase tracking-wider transition-all duration-200 hover:bg-text-secondary hover:-translate-y-0.5"
-              >
-                Start Now
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Page Content */}
       <main className="flex-1 pt-24 pb-8 px-4 sm:px-6 lg:px-8">
@@ -495,21 +453,7 @@ export default function Prospectivity() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zenith-border py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-full">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-zenith-accent">
-                <span className="text-white font-bold text-lg leading-none">+</span>
-              </div>
-              <span className="text-lg font-semibold tracking-wider uppercase text-white">MANGANAI</span>
-            </div>
-            <p className="text-xs text-text-muted text-center">
-              © {new Date().getFullYear()} MnAI. AI/ML + Space Technology Platform for Manganese Intelligence.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer/>
     </div>
   );
 }
