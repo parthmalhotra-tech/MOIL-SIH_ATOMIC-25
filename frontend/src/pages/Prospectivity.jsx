@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, Filter, MapPin, ChevronDown, X, Map, Layers, ArrowRight, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-import ProspectivityMap from "../components/ProspectivityMap";
+import ProspectivityExplorationMap from "../components/ProspectivityExplorationMap";
 import { prospectivityMockData, getProspectivityColor } from "../data/prospectivityData";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -177,7 +177,7 @@ export default function Prospectivity() {
             <div className="grid lg:grid-cols-[1fr_380px] gap-6">
               {/* Map Container */}
               <div className="relative min-h-[700px] rounded-xl overflow-hidden border border-zenith-border bg-zenith-surface">
-                <ProspectivityMap
+                <ProspectivityExplorationMap
                   data={filteredData}
                   initialView={{ center: [21.0, 78.0], zoom: 5 }}
                   onPointClick={handlePointClick}

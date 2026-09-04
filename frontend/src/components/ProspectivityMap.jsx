@@ -31,13 +31,18 @@ function ProspectivityPoint({ point, onClick, isSelected }) {
         opacity: 1,
         fillOpacity: 0.85,
       }}
-      onClick={() => onClick(point)}
-      className="transition-all duration-200"
+      onClick={(e) => {
+        e.originalEvent?.stopPropagation();
+        onClick(point);
+      }}
+      className="transition-all duration-200 cursor-pointer"
     >
       <Popup
         className="manganai-popup"
         offset={[0, -radius - 6]}
         closeButton={false}
+        autoClose={false}
+        closeOnClick={true}
       >
         <ProspectivityPopup point={point} />
       </Popup>
