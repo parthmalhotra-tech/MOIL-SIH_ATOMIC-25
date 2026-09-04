@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+  /* Zenith-inspired: near-black with white typography, red accent */
+  --color-zenith-bg: #050505;
+  --color-zenith-surface: #0a0a0a;
+  --color-zenith-elevated: #111111;
+  --color-zenith-border: #1f1f1f;
+  --color-zenith-accent: #e53935;
+  --color-zenith-accent-hover: #d32f2f;
+  --color-zenith-accent-soft: #ef5350;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b3b3b3;
+  --color-text-muted: #737373;
+  --color-text-subtle: #525252;
+
+  /* Fonts */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --shadow-premium: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-zenith-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-zenith-bg text-text-primary antialiased;
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    @apply bg-zenith-accent/30 text-white;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-zenith-surface/80 backdrop-blur-xl border border-zenith-border/50;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  @apply bg-zenith-surface;
+  font-family: var(--font-sans);
+}
+
+.leaflet-popup-content-wrapper {
+  @apply bg-zenith-elevated border border-zenith-border rounded-lg;
+}
+
+.leaflet-popup-content {
+  @apply text-white m-2;
+  font-family: var(--font-sans);
+}
+
+.leaflet-popup-tip {
+  @apply bg-zenith-elevated border border-zenith-border;
+}
+
+.leaflet-control-zoom a {
+  @apply bg-zenith-surface border border-zenith-border text-white hover:bg-zenith-elevated;
+}
+
+.leaflet-control-attribution {
+  @apply bg-zenith-bg/80 backdrop-blur-sm text-xs;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-zenith-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-zenith-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zenith-accent;
+}
+
+/* Recharts tooltip */
+.recharts-tooltip-wrapper {
+  @apply bg-zenith-elevated border border-zenith-border rounded-lg p-3;
+}
+
+.recharts-default-tooltip {
+  @apply bg-transparent border-none shadow-none p-0;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-zenith-accent ring-offset-2 ring-offset-zenith-bg;
+}

@@ -1,8 +1,7 @@
-function App(){
-  return (
-    <div>
-      <h1>sih26009</h1>
-    </div>
-  );
+import Dashboard from "./pages/Dashboard";
+
+function App() {
+  return <Dashboard />;
 }
+
 export default App;
