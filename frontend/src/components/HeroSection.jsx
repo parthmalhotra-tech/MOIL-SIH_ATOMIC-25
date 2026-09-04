@@ -19,13 +19,7 @@ export default function HeroSection() {
           {/* Left: Text content */}
           <div className="animate-slide-up pr-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zenith-elevated border border-zenith-border mb-8 max-w-fit">
-              <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
-                <span className="animate-ping absolute inset-0 rounded-full bg-zenith-accent opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zenith-accent" />
-              </span>
-              <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">SIH 2026 · National Level</span>
-            </div>
+            
 
             {/* Hero Heading - Large serif, stacked */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.05] tracking-tight text-white text-balance mb-8">
@@ -36,7 +30,7 @@ export default function HeroSection() {
 
             {/* Description */}
             <p className="text-lg sm:text-xl text-text-secondary leading-relaxed mb-10 max-w-xl">
-              India's first AI/ML + Space Technology platform for manganese prospectivity mapping, production forecasting, and operational risk intelligence.
+              AI/ML + Space Technology platform for manganese prospectivity mapping, production forecasting, and operational risk intelligence.
             </p>
 
             {/* CTA Buttons - White primary + Outline secondary */}

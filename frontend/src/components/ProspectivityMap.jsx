@@ -154,7 +154,7 @@ export default function ProspectivityMap({ data, initialView, onPointClick }) {
   const view = initialView || defaultView;
 
   return (
-    <div className="relative w-full h-full min-h-[650px] rounded-xl overflow-hidden border border-zenith-border bg-zenith-surface">
+    <div className="relative w-full h-[650px] min-h-[650px] rounded-xl overflow-hidden border border-zenith-border bg-zenith-surface">
       <MapContainer
         center={view.center}
         zoom={view.zoom}
@@ -163,13 +163,12 @@ export default function ProspectivityMap({ data, initialView, onPointClick }) {
         className="h-full w-full"
         attributionControl={true}
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>'
-          subdomains={["a", "b", "c", "d"]}
-          maxZoom={18}
-          minZoom={3}
-        />
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=cb1_2w5l_1_7a76ce8d863239cb8593a04e"
+        attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+        subdomains={["a", "b", "c", "d"]}
+        maxZoom={20}
+      />
        
         {data.map((point, index) => (
           <ProspectivityPoint

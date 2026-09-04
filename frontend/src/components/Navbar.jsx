@@ -40,11 +40,8 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Right Actions - Log in + Start Now */}
+          {/* Right Actions - Start Now only */}
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block px-4 py-2 text-sm font-medium uppercase tracking-wide text-text-secondary hover:text-white transition-colors">
-              Log in
-            </button>
             <a
               href="#prospectivity"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-zenith-bg font-semibold text-sm uppercase tracking-wider transition-all duration-200 hover:bg-text-secondary hover:-translate-y-0.5"
