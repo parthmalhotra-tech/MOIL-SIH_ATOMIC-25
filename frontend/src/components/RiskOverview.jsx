@@ -102,13 +102,12 @@ function DonutChart({ distribution, totalLocations, colors }) {
   const strokeWidth = 18;
   const circumference = 2 * Math.PI * radius;
 
-  let cumulative = 0;
-  const segments = distribution.map((item) => {
+  const segments = distribution.reduce((acc, item) => {
+    const cumulative = acc.reduce((sum, s) => sum + s.percentage, 0) / 100;
     const percentage = item.percentage / 100;
     const offset = circumference - percentage * circumference - cumulative * circumference;
-    cumulative += percentage;
-    return { ...item, offset, percentage, color: colors[item.level] || item.color };
-  });
+    return [...acc, { ...item, offset, percentage, color: colors[item.level] || item.color }];
+  }, []);
 
   return (
     <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl p-6 border border-zenith-border h-full flex flex-col items-center justify-center relative">

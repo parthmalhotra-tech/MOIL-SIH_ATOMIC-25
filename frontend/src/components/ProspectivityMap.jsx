@@ -137,11 +137,8 @@ function ProspectivityPopup({ point }) {
  * @param {Object} initialView - Initial map view { center: [lat, lng], zoom: number }
  * @param {Function} onPointClick - Callback when a point is clicked
  */
-export default function ProspectivityMap({ data, initialView, onPointClick }) {
-  const [selectedPoint, setSelectedPoint] = useState(null);
-
+export default function ProspectivityMap({ data, initialView, onPointClick, selectedPoint }) {
   const handlePointClick = (point) => {
-    setSelectedPoint(point);
     onPointClick?.(point);
   };
 
@@ -153,6 +150,13 @@ export default function ProspectivityMap({ data, initialView, onPointClick }) {
 
   const view = initialView || defaultView;
 
+  // Check if a point matches the selected point by coordinates
+  const isPointSelected = (point) => {
+    if (!selectedPoint) return false;
+    return Math.abs(point.latitude - selectedPoint.latitude) < 0.0001 && 
+           Math.abs(point.longitude - selectedPoint.longitude) < 0.0001;
+  };
+
   return (
     <div className="relative w-full h-[650px] min-h-[650px] rounded-xl overflow-hidden border border-zenith-border bg-zenith-surface">
       <MapContainer
@@ -163,19 +167,19 @@ export default function ProspectivityMap({ data, initialView, onPointClick }) {
         className="h-full w-full"
         attributionControl={true}
       >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=cb1_2w5l_1_7a76ce8d863239cb8593a04e"
-        attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-        subdomains={["a", "b", "c", "d"]}
-        maxZoom={20}
-      />
-       
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=cb1_2w5l_1_7a76ce8d863239cb8593a04e"
+          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+          subdomains={["a", "b", "c", "d"]}
+          maxZoom={20}
+        />
+        
         {data.map((point, index) => (
           <ProspectivityPoint
-            key={index}
+            key={`${point.latitude}-${point.longitude}`}
             point={point}
             onClick={handlePointClick}
-            isSelected={selectedPoint === point}
+            isSelected={isPointSelected(point)}
           />
         ))}
 

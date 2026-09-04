@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 /**
  * KpiCard - Reusable KPI metric card component (Zenith style: minimal, no colorful gradients)
  */
-export default function KpiCard({ title, value, unit, trend, trendLabel, icon: Icon, highlight = false }) {
+export default function KpiCard({ title, value, unit, trend, trendLabel, highlight = false }) {
   const isPositive = trend?.startsWith("+");
   const isNegative = trend?.startsWith("-");
   const TrendIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
