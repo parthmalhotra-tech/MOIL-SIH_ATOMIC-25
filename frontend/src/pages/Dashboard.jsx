@@ -11,15 +11,27 @@ import { prospectivityMockData } from "../data/prospectivityData";
 import { productionData } from "../data/productionData";
 import { riskData } from "../data/riskData";
 import { aiInsightData } from "../data/aiInsightData";
+import BorderGlow from "../components/borderglow";
+import CursorGrid from "../components/CursorGrid";
 
 export default function Dashboard() {
   return (
+    
+   
     <div className="min-h-screen bg-dark-bg flex flex-col">
+       <div className="fixed inset-0 z-0 pointer-events-none">
+               <CursorGrid
+                 color="#ffffff"
+                 opacity={0.08}
+               />
+             </div>
       {/* Navbar */}
       <Navbar />
+       
 
       {/* Main Content */}
       <main className="flex-1 w-full pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+        
         <div className="mx-auto max-w-7xl space-y-8">
           {/* Hero Section */}
           <HeroSection />
@@ -28,7 +40,13 @@ export default function Dashboard() {
           <section id="kpis" aria-labelledby="kpis-heading" className="animate-slide-up">
             <h2 id="kpis-heading" className="sr-only">Key Performance Indicators</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard
+                <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={80}
+                  glowIntensity={1.2}
+                  borderRadius={24}
+                >   
+                <KpiCard
                 title={kpiData.prospectivity.label}
                 value={kpiData.prospectivity.highVeryHighZones}
                 unit={kpiData.prospectivity.unit}
@@ -36,6 +54,13 @@ export default function Dashboard() {
                 trendLabel={kpiData.prospectivity.trendLabel}
                 color="manganai"
               />
+              </BorderGlow>
+              <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={80}
+                  glowIntensity={1.2}
+                  borderRadius={24}
+                >   
               <KpiCard
                 title={kpiData.production.label}
                 value={kpiData.production.forecastProduction}
@@ -44,6 +69,13 @@ export default function Dashboard() {
                 trendLabel={kpiData.production.trendLabel}
                 color="yellow"
               />
+              </BorderGlow>
+              <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={80}
+                  glowIntensity={1.2}
+                  borderRadius={24}
+                >   
               <KpiCard
                 title={kpiData.shortfall.label}
                 value={kpiData.shortfall.expectedShortfallPercent}
@@ -52,6 +84,13 @@ export default function Dashboard() {
                 trendLabel={kpiData.shortfall.trendLabel}
                 color="orange"
               />
+              </BorderGlow>
+              <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={80}
+                  glowIntensity={1.2}
+                  borderRadius={24}
+                >   
               <KpiCard
                 title={kpiData.risk.label}
                 value={kpiData.risk.highRiskLocations}
@@ -60,6 +99,7 @@ export default function Dashboard() {
                 trendLabel={kpiData.risk.trendLabel}
                 color="red"
               />
+              </BorderGlow>
             </div>
           </section>
 

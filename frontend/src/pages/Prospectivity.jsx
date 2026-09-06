@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { Search, Filter, MapPin, ChevronDown, X, Map, Layers, ArrowRight, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
 import ProspectivityExplorationMap from "../components/ProspectivityExplorationMap";
 import { prospectivityMockData, getProspectivityColor } from "../data/prospectivityData";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
+import BorderGlow from "../components/borderglow";
+import CursorGrid from "../components/CursorGrid";
 /**
  * Prospectivity Intelligence Page
  * Dedicated geospatial exploration workspace for manganese prospectivity
@@ -86,6 +86,12 @@ export default function Prospectivity() {
 
   return (
     <div className="min-h-screen bg-zenith-bg flex flex-col">
+      <div className="fixed inset-0 z-0 pointer-events-none">
+              <CursorGrid
+                color="#ffffff"
+                opacity={0.08}
+              />
+            </div>
       {/* Navbar */}
       <Navbar/>
 
@@ -192,6 +198,12 @@ export default function Prospectivity() {
               </div>
 
               {/* 5. SELECTED LOCATION DETAIL PANEL */}
+              <BorderGlow
+  glowColor="#ffffff"
+  glowRadius={80}
+  glowIntensity={1.2}
+  borderRadius={24}
+>
               <div className="relative">
                 {showDetailPanel && selectedLocation ? (
                   <div className="sticky top-24 h-[700px] bg-zenith-elevated/95 backdrop-blur-xl rounded-xl border border-zenith-border overflow-hidden flex flex-col animate-slide-up">
@@ -346,6 +358,7 @@ export default function Prospectivity() {
                   </div>
                 )}
               </div>
+              </BorderGlow>
             </div>
           </section>
 
@@ -355,7 +368,12 @@ export default function Prospectivity() {
               <h2 className="font-display font-semibold text-white text-xl">PROSPECTIVITY DISTRIBUTION</h2>
               <span className="text-xs text-text-muted font-mono">{stats.total} sampled locations</span>
             </div>
-            
+            <BorderGlow
+  glowColor="#ffffff"
+  glowRadius={80}
+  glowIntensity={1.2}
+  borderRadius={24}
+>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { label: "Very High", count: stats.veryHigh, color: "#e53935", percentage: ((stats.veryHigh / stats.total) * 100).toFixed(1) },
@@ -383,6 +401,7 @@ export default function Prospectivity() {
                 </div>
               ))}
             </div>
+            </BorderGlow>
           </section>
 
           {/* 8. RANKED / PRIORITY LOCATIONS */}

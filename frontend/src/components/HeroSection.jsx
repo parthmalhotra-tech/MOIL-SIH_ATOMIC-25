@@ -1,4 +1,5 @@
 import { ArrowRight, Play } from "lucide-react";
+import BorderGlow from "../components/borderglow";
 
 export default function HeroSection() {
   return (
@@ -51,52 +52,67 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Right: Visual element - keeps the map preview but minimal */}
+          {/* Right: Visual element - restructured card with proper layout */}
+           
           <div className="relative animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <div className="relative aspect-video rounded-2xl overflow-hidden border border-zenith-border bg-zenith-surface">
+            <div className="relative aspect-[4/3] min-h-[420px] rounded-2xl overflow-hidden border border-zenith-border bg-zenith-surface flex flex-col">
               <div className="absolute inset-0 bg-gradient-to-br from-zenith-accent/5 via-transparent to-transparent" />
-              
-              <div className="relative h-full flex items-center justify-center p-8">
-                <div className="text-center z-10 max-w-md">
-                  <div className="mx-auto mb-8 w-24 h-24 rounded-xl bg-zenith-elevated flex items-center justify-center border border-zenith-border">
-                    <svg className="w-12 h-12 text-zenith-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <BorderGlow
+  glowColor="#ffffff"
+  glowRadius={80}
+  glowIntensity={1.2}
+  borderRadius={24}
+>
+              <div className="relative h-full w-full flex flex-col items-center justify-between p-8 lg:p-10">
+                <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-md">
+                  {/* Icon - top */}
+                  <div className="mx-auto mb-6 w-20 h-20 rounded-xl bg-zenith-elevated flex items-center justify-center border border-zenith-border shrink-0">
+                    <svg className="w-10 h-10 text-zenith-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h3 className="font-display font-semibold text-white text-2xl mb-3">Interactive Prospectivity Map</h3>
-                  <p className="text-text-secondary mb-8 max-w-sm mx-auto">
+
+                  {/* Title */}
+                  <h3 className="font-display font-semibold text-white text-xl lg:text-2xl mb-3 leading-snug">
+                    Interactive Prospectivity Map
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-text-secondary mb-6 leading-relaxed text-base lg:text-lg max-w-md">
                     Real-time AI predictions across India's manganese belts. Scroll to explore the full interactive map with detailed drill-downs.
                   </p>
-                  
-                  {/* Feature tags - minimal */}
-                  <div className="flex flex-wrap justify-center gap-2">
+
+                  {/* KPI Row - horizontal two-column layout */}
+                  <div className="w-full max-w-md flex flex-col sm:flex-row gap-4 mb-6 shrink-0">
+                    <div className="flex-1 bg-zenith-elevated/80 backdrop-blur-xl p-4 lg:p-5 rounded-xl border border-zenith-border text-center min-w-0">
+                      <p className="font-display font-bold text-white text-xl lg:text-2xl leading-tight">2.84 Mt</p>
+                      <p className="text-xs text-text-muted uppercase tracking-wide mt-1.5 leading-snug">FY 2025–26<br className="hidden sm:block" />FORECAST</p>
+                    </div>
+                    <div className="flex-1 bg-zenith-elevated/80 backdrop-blur-xl p-4 lg:p-5 rounded-xl border border-zenith-border text-center min-w-0">
+                      <p className="font-display font-bold text-white text-xl lg:text-2xl leading-tight">91%</p>
+                      <p className="text-xs text-text-muted uppercase tracking-wide mt-1.5 leading-snug">MODEL<br className="hidden sm:block" />CONFIDENCE</p>
+                    </div>
+                  </div>
+
+                  {/* Bottom Tags - category pills */}
+                  <div className="flex flex-wrap justify-center gap-2 shrink-0">
                     {[
                       'Satellite Intelligence',
                       'ML Predictions', 
                       'Geological Data',
                       'Production Analytics'
                     ].map((item, i) => (
-                      <span key={i} className="px-3 py-1.5 rounded-full bg-zenith-elevated border border-zenith-border text-xs text-text-secondary">
+                      <span key={i} className="px-3 py-1.5 rounded-full bg-zenith-elevated border border-zenith-border text-xs text-text-secondary whitespace-nowrap">
                         {item}
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Floating stat cards - minimal */}
-            <div className="absolute bottom-6 left-6 right-6 lg:left-6 lg:right-auto lg:w-64 flex gap-3" style={{ animationDelay: '400ms' }}>
-              <div className="flex-1 bg-zenith-elevated/80 backdrop-blur-xl p-4 rounded-xl border border-zenith-border">
-                <p className="font-display font-bold text-white text-2xl">2.84 Mt</p>
-                <p className="text-xs text-text-muted uppercase tracking-wide mt-1">FY 2025-26 Forecast</p>
-              </div>
-              <div className="flex-1 bg-zenith-elevated/80 backdrop-blur-xl p-4 rounded-xl border border-zenith-border">
-                <p className="font-display font-bold text-white text-2xl">91%</p>
-                <p className="text-xs text-text-muted uppercase tracking-wide mt-1">Model Confidence</p>
-              </div>
+              </BorderGlow>
             </div>
           </div>
+         
         </div>
       </div>
     </section>

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { getProspectivityColor } from "../data/prospectivityData";
@@ -179,7 +178,7 @@ export default function ProspectivityMap({ data, initialView, onPointClick, sele
           maxZoom={20}
         />
         
-        {data.map((point, index) => (
+        {data.map((point) => (
           <ProspectivityPoint
             key={`${point.latitude}-${point.longitude}`}
             point={point}

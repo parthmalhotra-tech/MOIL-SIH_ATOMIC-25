@@ -1,61 +1,78 @@
-import { ArrowRight } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-
-const navItems = [
-  { label: "Dashboard", href: "/", active: false },
-  { label: "Prospectivity", href: "/prospectivity", active: false },
-  { label: "Production", href: "#", active: false },
-  { label: "Risk", href: "#", active: false },
-  { label: "Recommendations", href: "#", active: false },
-  { label: "Model & Data", href: "#", active: false },
-];
+import { useLocation, useNavigate } from "react-router-dom";
+import GooeyNav from "./GooeyNav";
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const location = useLocation();
 
+  const navItems = [
+    { label: "Dashboard", href: "/" },
+    { label: "Prospectivity", href: "/prospectivity" },
+    { label: "Production", href: "/production" },
+    { label: "Risk & Shortfall", href: "/RiskandShortfall" },
+    { label: "Model Intelligence", href: "/Modelintelligence" },
+  ];
+
+  const currentIndex = navItems.findIndex(
+    (item) => item.href === location.pathname
+  );
+
+  const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-zenith-bg border-b border-zenith-border">
-      <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-18 items-center justify-between">
-          {/* Logo  */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zenith-accent">
-               <img src="logo.png"></img>
-            </div>
-            <span className="text-xl font-semibold tracking-wider uppercase text-white">PRITHVIA</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-zenith-bg/95 backdrop-blur-xl border-b border-zenith-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-16 flex items-center justify-between">
+
+          {/* ================= LOGO ================= */}
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3 flex-shrink-0"
+            aria-label="Go to Dashboard"
+          >
+            <img
+              src="logo.png"
+              alt="Prithvia Logo"
+              className="h-10 w-10 object-cover rounded-full"
+            />
+
+            <span className="text-white font-bold text-xl tracking-wider">
+              PRITHVIA
+            </span>
+          </button>
+
+          {/* ================= DESKTOP NAV ================= */}
+          <div className="hidden md:flex items-center">
+            <GooeyNav
+              items={navItems}
+              initialActiveIndex={activeIndex}
+              animationTime={600}
+              particleCount={15}
+              particleDistances={[90, 10]}
+              particleR={100}
+              timeVariance={300}
+              colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+            />
           </div>
 
-          {/* Navigation - Centered */}
-          <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className={`text-sm font-medium uppercase tracking-wide transition-colors duration-200 ${
-                    isActive ? "text-white" : "text-text-muted hover:text-white"
-                  }`}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Right Actions - Start Now only */}
-          <div className="flex items-center gap-4">
-            <Link
-              to="/prospectivity"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-zenith-bg font-semibold text-sm uppercase tracking-wider transition-all duration-200 hover:bg-text-secondary hover:-translate-y-0.5"
+          {/* ================= MOBILE NAV ================= */}
+          <div className="md:hidden">
+            <select
+              value={location.pathname}
+              onChange={(e) => navigate(e.target.value)}
+              className="bg-zenith-surface border border-zenith-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zenith-accent"
+              aria-label="Navigation"
             >
-              Start Now
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </Link>
+              {navItems.map((item) => (
+                <option key={item.href} value={item.href}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
           </div>
+
         </div>
       </div>
-    </header>
+    </nav>
   );
 }
