@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import GooeyNav from "./GooeyNav";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -23,14 +24,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
 
-          {/* LOGO */}
+          {/* ================= LOGO ================= */}
           <button
             onClick={() => navigate("/")}
             className="flex items-center gap-3 flex-shrink-0"
             aria-label="Go to Dashboard"
           >
             <img
-              src="/logo.png"
+              src="/prithvia-logo.png"
               alt="Prithvia Logo"
               className="h-10 w-10 object-cover rounded-full"
             />
@@ -40,11 +41,21 @@ export default function Navbar() {
             </span>
           </button>
 
-          {/* DESKTOP NAV */}
+          {/* ================= DESKTOP NAV ================= */}
           <div className="hidden md:flex items-center">
-           </div>
+            <GooeyNav
+              items={navItems}
+              initialActiveIndex={activeIndex}
+              animationTime={600}
+              particleCount={15}
+              particleDistances={[90, 10]}
+              particleR={100}
+              timeVariance={300}
+              colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+            />
+          </div>
 
-          {/* MOBILE NAV */}
+          {/* ================= MOBILE NAV ================= */}
           <div className="md:hidden">
             <select
               value={location.pathname}
