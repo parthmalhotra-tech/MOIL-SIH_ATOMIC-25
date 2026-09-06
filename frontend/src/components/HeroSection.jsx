@@ -59,7 +59,7 @@ export default function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-br from-zenith-accent/5 via-transparent to-transparent" />
               <BorderGlow
   glowColor="#ffffff"
-  glowRadius={80}
+  glowRadius={220}
   glowIntensity={1.2}
   borderRadius={24}
 >

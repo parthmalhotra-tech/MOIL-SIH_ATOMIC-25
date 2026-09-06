@@ -200,7 +200,7 @@ export default function Prospectivity() {
               {/* 5. SELECTED LOCATION DETAIL PANEL */}
               <BorderGlow
   glowColor="#ffffff"
-  glowRadius={80}
+  glowRadius={200}
   glowIntensity={1.2}
   borderRadius={24}
 >

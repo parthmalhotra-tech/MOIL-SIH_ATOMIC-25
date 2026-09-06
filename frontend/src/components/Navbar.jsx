@@ -31,13 +31,13 @@ export default function Navbar() {
             aria-label="Go to Dashboard"
           >
             <img
-              src="/prithvia-logo.png"
+              src="logo.png"
               alt="Prithvia Logo"
               className="h-10 w-10 object-cover rounded-full"
             />
 
             <span className="text-white font-bold text-xl tracking-wider">
-              PRITHVIA
+              MnVisionAI
             </span>
           </button>
 
