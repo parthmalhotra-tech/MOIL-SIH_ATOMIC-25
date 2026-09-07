@@ -1,9 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.config import settings
-from app.routes import prospecitivity, production
+from app.routes import production
 from app.core.exceptions import ModelInferenceError
 
 
@@ -13,7 +12,6 @@ app = FastAPI(
 # ---------------------------------------------------------
 # Routes
 # ---------------------------------------------------------
-app.include_router(prospecitivity.router)
 app.include_router(production.router)
 # ---------------------------------------------------------
 # Model inference errors

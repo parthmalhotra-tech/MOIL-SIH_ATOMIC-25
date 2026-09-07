@@ -1,15 +1,11 @@
 from fastapi import APIRouter
-from app.schemas.prospectivity import ProspectivityMapResponse
-from app.services.prospectivity_model import get_prospectivity_map
+from app.schemas.prospectivity import ProspectivityPoint
+from app.services.prospectivity_model import get_prospectivity_predictions
 
-router= APIRouter()
+router = APIRouter()
 
-@router.get("/prospectivity/locations", response_model = ProspectivityMapResponse)
+@router.get("/prospectivity/locations",response_model=list[ProspectivityPoint],)
 def get_locations():
-  locations= get_prospectivity_map()
-  return {"locations":locations}
-
-
-
+    return get_prospectivity_predictions()
 
   
