@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
-import { Search, Filter, MapPin, ChevronDown, X, Map, Layers, ArrowRight, ExternalLink } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, MapPin, X, Map, ArrowRight, ExternalLink } from "lucide-react";
 import ProspectivityExplorationMap from "../components/ProspectivityExplorationMap";
-import { prospectivityMockData, getProspectivityColor } from "../data/prospectivityData";
+import { prospectivityMockData } from "../data/prospectivitydata";
+import { filterProspectivityPredictions, getLocationName, normaliseProspectivityPredictions, prospectivityColor } from "../services/prospectivityService";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BorderGlow from "../components/borderglow";
@@ -12,44 +13,53 @@ import CursorGrid from "../components/CursorGrid";
  */
 export default function Prospectivity() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [prospectivityFilter, setProspectivityFilter] = useState("All");
-  const [activeLayer, setActiveLayer] = useState("Prospectivity");
+  const [threshold, setThreshold] = useState(0.5);
+  const [showProspectivityLayer, setShowProspectivityLayer] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const [visibleLocations, setVisibleLocations] = useState(0);
+  const [locationName, setLocationName] = useState(null);
 
-  // Filter data based on search and prospectivity class
+  const predictionRecords = useMemo(() => normaliseProspectivityPredictions(prospectivityMockData), []);
+
+  useEffect(() => {
+    if (!selectedLocation) return undefined;
+    const controller = new AbortController();
+    setLocationName(null);
+    getLocationName(selectedLocation.latitude, selectedLocation.longitude, controller.signal)
+      .then(setLocationName)
+      .catch((error) => { if (error.name !== "AbortError") setLocationName({ label: "Location unavailable" }); });
+    return () => controller.abort();
+  }, [selectedLocation]);
+
+  // All filters work on the same coordinate + prediction record. No row-based
+  // association is performed when the backend data source is swapped in.
   const filteredData = useMemo(() => {
-    return prospectivityMockData.filter((point) => {
-      const matchesSearch = !searchQuery || 
-        point.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        point.district.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesFilter = prospectivityFilter === "All" || point.prospectivity_class === prospectivityFilter;
-      
-      return matchesSearch && matchesFilter;
-    });
-  }, [searchQuery, prospectivityFilter]);
+    if (!showProspectivityLayer) return [];
+    return filterProspectivityPredictions(predictionRecords, { threshold, search: searchQuery });
+  }, [predictionRecords, searchQuery, showProspectivityLayer, threshold]);
 
   // Calculate summary statistics from actual data
   const stats = useMemo(() => {
-    const total = prospectivityMockData.length;
-    const veryHigh = prospectivityMockData.filter(p => p.prospectivity_class === "Very High").length;
-    const high = prospectivityMockData.filter(p => p.prospectivity_class === "High").length;
-    const medium = prospectivityMockData.filter(p => p.prospectivity_class === "Medium").length;
-    const low = prospectivityMockData.filter(p => p.prospectivity_class === "Low").length;
-    const scores = prospectivityMockData.map(p => p.prospectivity_score);
+    const total = predictionRecords.length;
+    const count = (classification) => predictionRecords.filter((point) => point.classification === classification).length;
+    const veryHigh = count("Very High");
+    const high = count("High");
+    const moderate = count("Moderate");
+    const low = count("Low");
+    const scores = predictionRecords.map((point) => point.probability);
     const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
     const maxScore = Math.max(...scores);
     
-    return { total, veryHigh, high, medium, low, avgScore, maxScore };
-  }, []);
+    return { total, veryHigh, high, moderate, low, avgScore, maxScore };
+  }, [predictionRecords]);
 
   // Top locations ranked by score
   const topLocations = useMemo(() => {
-    return [...prospectivityMockData]
+    return [...predictionRecords]
       .sort((a, b) => b.prospectivity_score - a.prospectivity_score)
       .slice(0, 10);
-  }, []);
+  }, [predictionRecords]);
 
   const handlePointClick = (point) => {
     setSelectedLocation(point);
@@ -77,13 +87,6 @@ export default function Prospectivity() {
     return Number(num).toFixed(decimals);
   };
 
-  const prospectivityClasses = ["All", "Very High", "High", "Medium", "Low"];
-  const layerOptions = [
-    { id: "Prospectivity", label: "Prospectivity", available: true },
-    { id: "Satellite", label: "Satellite", available: false },
-    { id: "Terrain", label: "Terrain", available: false },
-  ];
-
   return (
     <div className="min-h-screen bg-zenith-bg flex flex-col">
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -108,12 +111,6 @@ export default function Prospectivity() {
             <p className="text-text-secondary text-lg max-w-2xl">
               Explore manganese prospectivity across sampled locations. Model-derived visualization for SIH 2026.
             </p>
-            <p className="text-xs text-text-muted flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded bg-zenith-accent/10 border border-zenith-accent/20 text-zenith-accent font-mono">
-                Demo Data
-              </span>
-              <span>Based on sample ML predictions — not live model inference</span>
-            </p>
           </section>
 
           {/* 2. EXPLORATION CONTROLS */}
@@ -125,7 +122,7 @@ export default function Prospectivity() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Search location, district, state..."
+                  placeholder="Search coordinates, score, or classification..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 rounded-lg bg-zenith-surface border border-zenith-border text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-zenith-accent focus:border-transparent transition-all"
@@ -133,47 +130,10 @@ export default function Prospectivity() {
                 />
               </div>
 
-              {/* Filters */}
-              <div className="flex flex-wrap items-center gap-3">
-                
-                {/* Prospectivity Filter */}
-                <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" aria-hidden="true" />
-                  <select
-                    value={prospectivityFilter}
-                    onChange={(e) => setProspectivityFilter(e.target.value)}
-                    className="appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-zenith-surface border border-zenith-border text-white text-sm focus:outline-none focus:ring-2 focus:ring-zenith-accent focus:border-transparent transition-all cursor-pointer"
-                    aria-label="Filter by prospectivity class"
-                  >
-                    {prospectivityClasses.map((cls) => (
-                      <option key={cls} value={cls}>{cls}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" aria-hidden="true" />
-                </div>
-
-                {/* Layer Control */}
-                <div className="relative">
-                  <Layers className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" aria-hidden="true" />
-                  <select
-                    value={activeLayer}
-                    onChange={(e) => setActiveLayer(e.target.value)}
-                    className="appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-zenith-surface border border-zenith-border text-white text-sm focus:outline-none focus:ring-2 focus:ring-zenith-accent focus:border-transparent transition-all cursor-pointer"
-                    aria-label="Map layer"
-                  >
-                    {layerOptions.map((layer) => (
-                      <option key={layer.id} value={layer.id} disabled={!layer.available}>
-                        {layer.label} {!layer.available && " (Coming Soon)"}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" aria-hidden="true" />
-                </div>
-
-                {/* Results Count */}
-                <div className="hidden sm:flex items-center px-4 py-2.5 rounded-lg bg-zenith-accent/10 border border-zenith-accent/20 text-sm font-medium text-zenith-accent">
-                  {filteredData.length} of {prospectivityMockData.length} locations
-                </div>
+              <div className="flex flex-1 flex-wrap items-center gap-x-5 gap-y-3 lg:justify-end">
+                <label className="flex items-center gap-2 text-sm text-text-secondary"><input type="checkbox" checked={showProspectivityLayer} onChange={(event) => setShowProspectivityLayer(event.target.checked)} className="accent-zenith-accent" /> Prospectivity Layer</label>
+                <label className="flex min-w-[220px] items-center gap-3 text-sm text-text-secondary">Score threshold <span className="font-mono text-white">{threshold.toFixed(2)}</span><input type="range" min="0.5" max="1" step="0.01" value={threshold} onChange={(event) => setThreshold(Number(event.target.value))} className="accent-zenith-accent" aria-label="Prospectivity score threshold" /></label>
+                <div className="hidden sm:flex items-center px-4 py-2.5 rounded-lg bg-zenith-accent/10 border border-zenith-accent/20 text-sm font-medium text-zenith-accent">{visibleLocations.toLocaleString()} visible</div>
               </div>
             </div>
           </section>
@@ -187,13 +147,14 @@ export default function Prospectivity() {
                   data={filteredData}
                   initialView={{ center: [21.0, 78.0], zoom: 5 }}
                   onPointClick={handlePointClick}
+                  onViewportChange={setVisibleLocations}
                   selectedPoint={selectedLocation}
                 />
                 
                 {/* Map Info Badge */}
                 <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-lg bg-zenith-bg/95 backdrop-blur-sm border border-zenith-border text-xs text-text-secondary">
                   <MapPin className="w-3.5 h-3.5 text-zenith-accent" aria-hidden="true" />
-                  <span>{filteredData.length} locations visible</span>
+                  <span>{visibleLocations.toLocaleString()} locations visible</span>
                 </div>
               </div>
 
@@ -226,7 +187,7 @@ export default function Prospectivity() {
                       <div className="space-y-4">
                         <div>
                           <p className="text-xs uppercase tracking-widest text-text-muted font-medium mb-2">Location</p>
-                          <p className="font-display font-semibold text-white text-xl">{selectedLocation.district}, {selectedLocation.state}</p>
+                          <p className="font-display font-semibold text-white text-xl">{locationName?.label ?? "Locating selected coordinates…"}</p>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-3">
@@ -247,15 +208,15 @@ export default function Prospectivity() {
                         <div className="flex items-center gap-3">
                           <div 
                             className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: getProspectivityColor(selectedLocation.prospectivity_class) + "20", border: `2px solid ${getProspectivityColor(selectedLocation.prospectivity_class)}` }}
+                            style={{ backgroundColor: prospectivityColor(selectedLocation.probability, 0.12), border: `2px solid ${prospectivityColor(selectedLocation.probability)}` }}
                           >
-                            <span className="font-display font-bold" style={{ color: getProspectivityColor(selectedLocation.prospectivity_class) }}>
-                              {selectedLocation.prospectivity_class === "Very High" ? "VH" : selectedLocation.prospectivity_class === "High" ? "H" : selectedLocation.prospectivity_class === "Medium" ? "M" : "L"}
+                            <span className="font-display font-bold" style={{ color: prospectivityColor(selectedLocation.probability) }}>
+                              {selectedLocation.classification === "Very High" ? "VH" : selectedLocation.classification === "High" ? "H" : selectedLocation.classification === "Moderate" ? "M" : "L"}
                             </span>
                           </div>
                           <div>
-                            <p className="font-display font-semibold text-lg" style={{ color: getProspectivityColor(selectedLocation.prospectivity_class) }}>
-                              {selectedLocation.prospectivity_class}
+                            <p className="font-display font-semibold text-lg" style={{ color: prospectivityColor(selectedLocation.probability) }}>
+                              {selectedLocation.classification}
                             </p>
                             <p className="text-text-muted text-sm">Model classification</p>
                           </div>
@@ -264,18 +225,19 @@ export default function Prospectivity() {
                         <div className="bg-zenith-surface rounded-lg p-4 border border-zenith-border">
                           <div className="flex items-center justify-between">
                             <span className="text-text-secondary">MODEL SCORE</span>
-                            <span className="font-display font-bold text-white text-2xl tabular-nums">{formatNumber(selectedLocation.prospectivity_score, 3)}</span>
+                            <span className="font-display font-bold text-white text-2xl tabular-nums">{formatNumber(selectedLocation.probability, 3)}</span>
                           </div>
                           <div className="mt-2 h-1.5 bg-zenith-border rounded-full overflow-hidden">
                             <div 
                               className="h-full rounded-full transition-all duration-500"
                               style={{ 
-                                width: `${selectedLocation.prospectivity_score * 100}%`,
-                                backgroundColor: getProspectivityColor(selectedLocation.prospectivity_class)
+                                width: `${selectedLocation.probability * 100}%`,
+                                backgroundColor: prospectivityColor(selectedLocation.probability)
                               }}
                             />
                           </div>
                         </div>
+                        <div className="flex items-center justify-between rounded-lg border border-zenith-border bg-zenith-surface px-4 py-3 text-sm"><span className="text-text-secondary">Prediction</span><span className="font-medium text-white">{selectedLocation.prediction ? "Positive" : "Negative"}</span></div>
                       </div>
 
                       {/* Spectral & Terrain Data */}
@@ -352,8 +314,8 @@ export default function Prospectivity() {
                       Click a location on the map to view detailed prospectivity information and spectral features.
                     </p>
                     <div className="text-xs text-text-muted space-y-1">
-                      <p>• {prospectivityMockData.length} sampled locations available</p>
-                      <p>• {stats.veryHigh} Very High · {stats.high} High · {stats.medium} Medium · {stats.low} Low</p>
+                      <p>• {predictionRecords.length.toLocaleString()} sampled locations available</p>
+                      <p>• {stats.veryHigh} Very High · {stats.high} High · {stats.moderate} Moderate · {stats.low} Low</p>
                     </div>
                   </div>
                 )}
@@ -378,8 +340,8 @@ export default function Prospectivity() {
               {[
                 { label: "Very High", count: stats.veryHigh, color: "#e53935", percentage: ((stats.veryHigh / stats.total) * 100).toFixed(1) },
                 { label: "High", count: stats.high, color: "#f97316", percentage: ((stats.high / stats.total) * 100).toFixed(1) },
-                { label: "Medium", count: stats.medium, color: "#eab308", percentage: ((stats.medium / stats.total) * 100).toFixed(1) },
-                { label: "Low", count: stats.low, color: "#22c55e", percentage: ((stats.low / stats.total) * 100).toFixed(1) },
+                { label: "Moderate", count: stats.moderate, color: prospectivityColor(0.4), percentage: ((stats.moderate / stats.total) * 100).toFixed(1) },
+                { label: "Low", count: stats.low, color: prospectivityColor(0.2), percentage: ((stats.low / stats.total) * 100).toFixed(1) },
                 { label: "Avg Score", count: stats.avgScore.toFixed(3), color: "#e53935", percentage: null },
               ].map((item) => (
                 <div key={item.label} className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl p-5 border border-zenith-border relative overflow-hidden group">
@@ -413,12 +375,10 @@ export default function Prospectivity() {
             
             <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border overflow-hidden">
               {/* Table Header */}
-              <div className="grid grid-cols-[1fr_80px_80px_100px_100px_120px] gap-4 px-6 py-4 border-b border-zenith-border text-xs uppercase tracking-wider font-medium text-text-muted">
-                <div>Location</div>
+              <div className="grid grid-cols-[1fr_100px_130px_120px] gap-4 px-6 py-4 border-b border-zenith-border text-xs uppercase tracking-wider font-medium text-text-muted">
+                <div>Coordinates</div>
                 <div className="text-center">Score</div>
                 <div className="text-center">Class</div>
-                <div className="text-center">State</div>
-                <div className="text-center">District</div>
                 <div className="text-center">Action</div>
               </div>
               
@@ -427,11 +387,11 @@ export default function Prospectivity() {
                 {topLocations.map((location, index) => (
                   <div 
                     key={index}
-                    className="grid grid-cols-[1fr_80px_80px_100px_100px_120px] gap-4 px-6 py-4 items-center hover:bg-zenith-surface/50 transition-colors cursor-pointer"
+                    className="grid grid-cols-[1fr_100px_130px_120px] gap-4 px-6 py-4 items-center hover:bg-zenith-surface/50 transition-colors cursor-pointer"
                     onClick={() => handleMapCenter(location)}
                   >
-                    <div className="font-medium text-white">
-                      {location.district}, {location.state}
+                    <div className="font-mono text-sm text-white">
+                      {formatNumber(location.latitude, 4)}° N, {formatNumber(location.longitude, 4)}° E
                     </div>
                     <div className="text-center font-mono font-semibold text-white tabular-nums">
                       {formatNumber(location.prospectivity_score, 3)}
@@ -440,16 +400,14 @@ export default function Prospectivity() {
                       <span
                         className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider"
                         style={{
-                          backgroundColor: getProspectivityColor(location.prospectivity_class) + "20",
-                          color: getProspectivityColor(location.prospectivity_class),
-                          border: `1px solid ${getProspectivityColor(location.prospectivity_class)}40`,
+                          backgroundColor: prospectivityColor(location.probability, 0.12),
+                          color: prospectivityColor(location.probability),
+                          border: `1px solid ${prospectivityColor(location.probability, 0.35)}`,
                         }}
                       >
                         {location.prospectivity_class}
                       </span>
                     </div>
-                    <div className="text-center text-text-secondary text-sm">{location.state}</div>
-                    <div className="text-center text-text-secondary text-sm">{location.district}</div>
                     <div className="text-center">
                       <button
                         onClick={(e) => {

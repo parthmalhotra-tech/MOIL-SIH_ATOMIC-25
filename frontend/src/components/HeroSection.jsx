@@ -25,7 +25,7 @@ export default function HeroSection() {
             {/* Hero Heading - Large serif, stacked */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.05] tracking-tight text-white text-balance mb-8">
               <span className="block">Discover manganese</span>
-              <span className="block">intelligence with AI.</span>
+              <span className="block">intelligence</span>
               <span className="block italic font-medium text-text-secondary mt-2">Powered by space technology.</span>
             </h1>
 

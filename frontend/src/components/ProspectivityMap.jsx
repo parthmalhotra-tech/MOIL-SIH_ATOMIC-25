@@ -1,196 +1,46 @@
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import { MapContainer, Popup, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { getProspectivityColor } from "../data/prospectivityData";
+import ProspectivitySurfaceLayer from "./ProspectivitySurfaceLayer";
 import MapLegend from "./MapLegend";
+import { classifyProspectivity, getLocationName, normaliseProspectivityPredictions, prospectivityColor } from "../services/prospectivityService";
 
-/**
- * MapViewport - Handles map view adjustments
- */
-function MapViewport({ center, zoom }) {
-  const map = useMap();
-  map.setView(center, zoom, { animate: true, duration: 1 });
-  return null;
-}
-
-/**
- * ProspectivityPoint - Individual prediction point marker
- */
-function ProspectivityPoint({ point, onClick, isSelected }) {
-  const color = getProspectivityColor(point.prospectivity_class);
-  const radius = Math.max(8, Math.min(18, point.prospectivity_score * 20));
-
-  return (
-    <CircleMarker
-      center={[point.latitude, point.longitude]}
-      radius={radius}
-      pathOptions={{
-        fillColor: color,
-        color: isSelected ? "#fff" : "#050505",
-        weight: isSelected ? 2.5 : 1.5,
-        opacity: 1,
-        fillOpacity: 0.85,
-      }}
-      onClick={(e) => {
-        e.originalEvent?.stopPropagation();
-        onClick(point);
-      }}
-      className="transition-all duration-200 cursor-pointer"
-    >
-      <Popup
-        className="manganai-popup"
-        offset={[0, -radius - 6]}
-        closeButton={false}
-        autoClose={false}
-        closeOnClick={true}
-      >
-        <ProspectivityPopup point={point} />
-      </Popup>
-    </CircleMarker>
-  );
-}
-
-/**
- * ProspectivityPopup - Detailed popup content (Zenith style)
- */
-function ProspectivityPopup({ point }) {
-  const formatNumber = (num, decimals = 2) => {
-    if (num === undefined || num === null) return "—";
-    return Number(num).toFixed(decimals);
-  };
-
-  const classColor = getProspectivityColor(point.prospectivity_class);
-
-  return (
-    <div className="p-1 min-w-[280px]" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h4 className="font-display font-semibold text-white text-sm mb-0.5">{point.district}, {point.state}</h4>
-          <p className="text-[10px] text-text-muted font-mono">
-            {formatNumber(point.latitude, 4)}°N, {formatNumber(point.longitude, 4)}°E
-          </p>
-        </div>
-        <span
-          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
-          style={{
-            backgroundColor: classColor + "20",
-            color: classColor,
-            border: `1px solid ${classColor}40`,
-          }}
-        >
-          {point.prospectivity_class}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 mb-3 text-[10px]">
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">Prospectivity Score</p>
-          <p className="font-mono font-bold text-white text-base">{formatNumber(point.prospectivity_score, 3)}</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">Confidence</p>
-          <p className="font-mono font-bold text-white text-base">{Math.round(point.prospectivity_score * 100)}%</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">NDVI</p>
-          <p className="font-mono font-bold text-white">{formatNumber(point.NDVI, 3)}</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">NDWI</p>
-          <p className="font-mono font-bold text-white">{formatNumber(point.NDWI, 3)}</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">BSI</p>
-          <p className="font-mono font-bold text-white">{formatNumber(point.BSI, 3)}</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">Elevation</p>
-          <p className="font-mono font-bold text-white">{point.elevation_m} m</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">Slope</p>
-          <p className="font-mono font-bold text-white">{formatNumber(point.slope_deg, 1)}°</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border">
-          <p className="text-text-subtle mb-0.5">Terrain Relief</p>
-          <p className="font-mono font-bold text-white">{point.terrain_relief_m} m</p>
-        </div>
-        <div className="bg-zenith-surface/80 rounded-lg p-2.5 border border-zenith-border col-span-2">
-          <p className="text-text-subtle mb-0.5">Spectral Bands</p>
-          <p className="font-mono text-[9px] text-text-muted">
-            B02:{formatNumber(point.B02,3)} B03:{formatNumber(point.B03,3)} B04:{formatNumber(point.B04,3)} B08:{formatNumber(point.B08,3)} B11:{formatNumber(point.B11,3)} B12:{formatNumber(point.B12,3)}
-          </p>
-        </div>
-      </div>
-
-      <button
-        className="w-full px-3 py-2 rounded-lg bg-white text-zenith-bg font-semibold text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 hover:bg-text-secondary"
-        onClick={() => window.dispatchEvent(new CustomEvent('navigate-prospectivity', { detail: point }))}
-      >
-        Open Detailed Analysis
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+function DashboardProspectivityPopup({ point, location }) {
+  const classification = point.classification ?? classifyProspectivity(point.probability);
+  return <div className="min-w-[224px] p-1 font-sans">
+    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">Predicted Prospectivity</p>
+    <div className="space-y-3 text-xs">
+      <div className="flex items-end justify-between gap-4 border-b border-zenith-border pb-2.5"><span className="text-text-muted">Score</span><span className="font-mono text-base font-semibold text-white">{point.probability.toFixed(3)}</span></div>
+      <div className="flex items-center justify-between gap-4"><span className="text-text-muted">Classification</span><span className="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: prospectivityColor(point.probability), backgroundColor: prospectivityColor(point.probability, 0.12), border: `1px solid ${prospectivityColor(point.probability, 0.35)}` }}>{classification}</span></div>
+      <div className="flex items-center justify-between gap-4"><span className="text-text-muted">Prediction</span><span className="font-medium text-white">{point.prediction ? "Positive" : "Negative"}</span></div>
+      <div className="border-t border-zenith-border pt-2.5 text-[11px] text-text-secondary"><p>Coordinates</p><p className="mt-1 font-mono text-white">{point.latitude.toFixed(4)}° N</p><p className="font-mono text-white">{point.longitude.toFixed(4)}° E</p></div>
+      <div className="border-t border-zenith-border pt-2.5 text-[11px] text-text-secondary"><p>Location</p><p className="mt-1 text-white">{location?.label ?? "Locating…"}</p></div>
     </div>
-  );
+  </div>;
 }
 
-/**
- * ProspectivityMap - Main map component (Zenith style)
- * @param {Array} data - Array of prospectivity prediction points
- * @param {Object} initialView - Initial map view { center: [lat, lng], zoom: number }
- * @param {Function} onPointClick - Callback when a point is clicked
- */
-export default function ProspectivityMap({ data, initialView, onPointClick, selectedPoint }) {
-  const handlePointClick = (point) => {
-    onPointClick?.(point);
-  };
-
-  // Default view centered on India
-  const defaultView = {
-    center: [21.0, 78.0],
-    zoom: 5,
-  };
-
-  const view = initialView || defaultView;
-
-  // Check if a point matches the selected point by coordinates
-  const isPointSelected = (point) => {
-    if (!selectedPoint) return false;
-    return Math.abs(point.latitude - selectedPoint.latitude) < 0.0001 && 
-           Math.abs(point.longitude - selectedPoint.longitude) < 0.0001;
-  };
-
-  return (
-    <div className="relative w-full h-[650px] min-h-[650px] rounded-xl overflow-hidden border border-zenith-border bg-zenith-surface">
-      <MapContainer
-        center={view.center}
-        zoom={view.zoom}
-        zoomControl={true}
-        scrollWheelZoom={true}
-        className="h-full w-full"
-        attributionControl={true}
-      >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=cb1_2w5l_1_7a76ce8d863239cb8593a04e"
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-          subdomains={["a", "b", "c", "d"]}
-          maxZoom={20}
-        />
-        
-        {data.map((point) => (
-          <ProspectivityPoint
-            key={`${point.latitude}-${point.longitude}`}
-            point={point}
-            onClick={handlePointClick}
-            isSelected={isPointSelected(point)}
-          />
-        ))}
-
-        <MapViewport center={view.center} zoom={view.zoom} />
-        {/* Map Legend */}
-        <MapLegend position="bottomright" pointCount={data.length} />
-      </MapContainer>
-    </div>
-  );
+/** Dashboard overview: canvas aggregation and a compact popup only. */
+export default function ProspectivityMap({ data = [], initialView }) {
+  const records = useMemo(() => normaliseProspectivityPredictions(data), [data]);
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const view = initialView ?? { center: [21.0, 78.0], zoom: 5 };
+  useEffect(() => {
+    if (!selectedPoint) return undefined;
+    const controller = new AbortController();
+    setSelectedLocation(null);
+    getLocationName(selectedPoint.latitude, selectedPoint.longitude, controller.signal)
+      .then(setSelectedLocation)
+      .catch((error) => { if (error.name !== "AbortError") setSelectedLocation({ label: "Location unavailable" }); });
+    return () => controller.abort();
+  }, [selectedPoint]);
+  return <div className="relative h-[650px] min-h-[650px] w-full overflow-hidden rounded-xl border border-zenith-border bg-zenith-surface">
+    <MapContainer center={view.center} zoom={view.zoom} zoomControl scrollWheelZoom className="h-full w-full" attributionControl>
+      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=cb1_2w5l_1_7a76ce8d863239cb8593a04e" attribution="&copy; OpenStreetMap contributors &copy; CARTO" subdomains={["a", "b", "c", "d"]} maxZoom={20} />
+      <ProspectivitySurfaceLayer records={records} onSelect={setSelectedPoint} />
+      <MapLegend pointCount={records.length} />
+      {selectedPoint && <Popup position={[selectedPoint.latitude, selectedPoint.longitude]} closeButton={false} autoPan eventHandlers={{ remove: () => setSelectedPoint(null) }}><DashboardProspectivityPopup point={selectedPoint} location={selectedLocation} /></Popup>}
+    </MapContainer>
+    <div className="pointer-events-none absolute bottom-4 right-4 z-[500] rounded-xl border border-zenith-border bg-zenith-bg/90 px-4 py-3 text-xs shadow-premium backdrop-blur-xl"><p className="font-display font-semibold text-white">Predicted prospectivity</p><p className="mt-1 text-text-muted">Continuous probability surface · {records.length.toLocaleString()} locations</p></div>
+  </div>;
 }
