@@ -7,7 +7,7 @@ import RiskOverview from "../components/RiskOverview";
 import AIInsight from "../components/AIInsight";
 import Footer from "../components/Footer";
 import { kpiData } from "../data/kpiData";
-import { prospectivityMockData } from "../data/prospectivityData";
+import { prospectivityMockData } from "../data/prospectivitydata";
 import { productionData } from "../data/productionData";
 import { riskData } from "../data/riskData";
 import { aiInsightData } from "../data/aiInsightData";
@@ -18,8 +18,14 @@ export default function Dashboard() {
   return (
     
    
-    <div className="min-h-screen bg-dark-bg flex flex-col">
-       <div className="fixed inset-0 z-0 pointer-events-none">
+    <div className="relative isolate min-h-screen bg-zenith-bg flex flex-col overflow-hidden">
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-[center_top] bg-no-repeat opacity-85"
+        style={{ backgroundImage: "url('/backgorund_pic.png')" }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(90deg,rgba(5,5,5,0.94)_0%,rgba(5,5,5,0.75)_38%,rgba(5,5,5,0.28)_100%),linear-gradient(180deg,rgba(5,5,5,0.12)_0%,rgba(5,5,5,0.72)_68%,rgba(5,5,5,0.96)_100%)]" aria-hidden="true" />
+       <div className="fixed inset-0 z-[2] pointer-events-none">
                <CursorGrid
                  color="#ffffff"
                  opacity={0.08}
@@ -30,7 +36,7 @@ export default function Dashboard() {
        
 
       {/* Main Content */}
-      <main className="flex-1 w-full pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+      <main className="relative z-10 flex-1 w-full pt-16 pb-8 px-4 sm:px-6 lg:px-8">
         
         <div className="mx-auto max-w-7xl space-y-8">
           {/* Hero Section */}
@@ -107,7 +113,7 @@ export default function Dashboard() {
           <section id="prospectivity" aria-labelledby="map-heading" className="animate-slide-up" style={{ animationDelay: '100ms' }}>
             <div className="mb-4">
               <h2 id="map-heading" className="text-xl font-semibold text-white mb-1">
-                India Manganese Prospectivity
+                India Predicted Prospectivity
               </h2>
               <p className="text-sm text-zinc-400">
                 AI-predicted manganese-associated prospectivity across sampled locations
