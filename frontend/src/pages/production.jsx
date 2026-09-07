@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BorderGlow from "../components/borderglow";
 import CursorGrid from "../components/CursorGrid";
+import { getProductionForecast } from "../services/productionService";
 
 import {
   ChevronDown,
@@ -583,10 +584,12 @@ function ProductionKpiCard({
     hasTrend && trend > 0;
 
   const decimals =
-    typeof value === "number" &&
-    !Number.isInteger(value)
-      ? 1
-      : 0;
+  unit === "Lakh Tonnes"
+    ? 2
+    : typeof value === "number" &&
+      !Number.isInteger(value)
+    ? 1
+    : 0;
 
   return (
     <div
@@ -736,10 +739,7 @@ function CustomTooltip({
             </span>
 
             <span className="font-mono text-white tabular-nums">
-              {Number(
-                item.value
-              ).toLocaleString()}{" "}
-              Tonnes
+              {Number(item.value).toFixed(2)} Lakh Tonnes
             </span>
 
           </div>
@@ -756,10 +756,8 @@ function CustomTooltip({
 function ProductionForecastMainChart({
   data,
 }) {
-  const formatYAxis = (
-    value
-  ) => `${(value / 1000).toFixed(0)}k`;
-
+  const formatYAxis = (value) =>
+    Number(value).toFixed(1);
   return (
     <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border p-4 sm:p-6">
 
@@ -772,7 +770,7 @@ function ProductionForecastMainChart({
           </h2>
 
           <p className="text-sm text-text-muted">
-            Yield in Tonnes, with model confidence interval
+            Production in Lakh Tonnes
           </p>
 
         </div>
@@ -900,59 +898,48 @@ function ProductionForecastMainChart({
               iconType="circle"
             />
 
-            <Area
-              type="monotone"
-              dataKey="confidenceHigh"
-              stroke="none"
-              fill="url(#productionConfidenceFill)"
-              name="Confidence"
-              legendType="none"
-              connectNulls
-            />
-
-            <Area
-              type="monotone"
-              dataKey="confidenceLow"
-              stroke="none"
-              fill="#18181b"
-              fillOpacity={1}
-              name="Confidence Lower"
-              legendType="none"
-              connectNulls
-            />
-
-            <Bar
-              dataKey="historical"
-              name="Historical"
-              fill="#3f3f46"
-              radius={[3, 3, 0, 0]}
-              barSize={28}
-            />
-
             <Line
-              type="monotone"
-              dataKey="target"
-              name="Target"
-              stroke="#64748b"
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              dot={false}
-              connectNulls
-            />
-
-            <Line
-              type="monotone"
-              dataKey="forecast"
-              name="Forecast"
-              stroke="#ef4444"
+              type="linear"
+              dataKey="historicalLine"
+              name="Actual Production"
+              stroke="#a1a1aa"
               strokeWidth={2.5}
               dot={{
-                r: 3,
+                r: 4,
+                fill: "#a1a1aa",
+                strokeWidth: 0,
+              }}
+              connectNulls={false}
+            />
+
+            <Line
+              type="linear"
+              dataKey="forecastBridge"
+              name="Forecast"
+              stroke="#ef4444"
+              strokeWidth={3}
+              dot={{
+                r: 5,
                 fill: "#ef4444",
                 strokeWidth: 0,
               }}
-              connectNulls
-              filter="url(#productionForecastGlow)"
+              connectNulls={false}
+            />
+
+            <Line
+              type="linear"
+              dataKey="targetBridge"
+              name="Target"
+              stroke="#b85c5c"
+              strokeWidth={2.5}
+              strokeOpacity={0.65}
+              strokeDasharray="6 4"
+              dot={{
+                r: 5,
+                fill: "#b85c5c",
+                strokeWidth: 0,
+              }}
+              connectNulls={false}
             />
 
           </ComposedChart>
@@ -1149,6 +1136,24 @@ function StateProductionRanking({
 ========================================================= */
 
 export default function Production() {
+  const [backendData, setBackendData] = useState(null);
+  const [backendError, setBackendError] = useState(null);
+
+  useEffect(() => {
+  const loadProductionForecast = async () => {
+    try {
+      const data = await getProductionForecast();
+
+      setBackendData(data);
+      console.log("Production backend:", data);
+    } catch (error) {
+      console.error("Production backend error:", error);
+      setBackendError(error.message);
+    }
+  };
+
+  loadProductionForecast();
+}, []);
 
   const [filters, setFilters] =
     useState({
@@ -1223,95 +1228,120 @@ export default function Production() {
 
         currentOutput: {
           ...productionKpis.currentOutput,
-          value: scale(
-            productionKpis
-              .currentOutput
-              .value
-          ),
+          value:
+            backendData?.historical?.length > 0
+              ? backendData.historical[
+                  backendData.historical.length - 1
+                ].production_lakh_tonnes
+              : 0,
+          unit: "Lakh Tonnes",
+          trend: 0,
+          trendLabel:
+            backendData?.historical?.length > 0
+              ? `Latest actual (${backendData.historical[
+                  backendData.historical.length - 1
+                ].month})`
+              : "",
         },
-
+        
         targetOutput: {
           ...productionKpis.targetOutput,
-          value: scale(
-            productionKpis
-              .targetOutput
-              .value
-          ),
+          value: backendData
+            ? backendData.expected_production_lakh_tonnes
+            : productionKpis.targetOutput.value,
+          unit: "Lakh Tonnes",
         },
 
         forecastOutput: {
           ...productionKpis.forecastOutput,
-          value: scale(
-            productionKpis
-              .forecastOutput
-              .value
-          ),
+          value: backendData
+            ? backendData.forecast_production_lakh_tonnes
+            : productionKpis.forecastOutput.value,
+          unit: "Lakh Tonnes",
         },
 
-        variance:
-          productionKpis.variance,
+        variance: {
+          ...productionKpis.variance,
+          label: "Predicted Shortfall",
+          value: backendData
+            ? backendData.predicted_shortfall_pct
+            : 0,
+          unit: "%",
+          status: backendData
+            ? backendData.classification === "YES"
+              ? "Shortfall Expected"
+              : "No Shortfall"
+            : null,
+          trend: 0,
+          trendLabel: "regression estimate",
+        },
 
-        confidence:
-          productionKpis.confidence,
+        confidence: {
+          ...productionKpis.confidence,
+          label: "Shortfall Probability",
+          value: backendData
+            ? backendData.shortfall_probability * 100
+            : 0,
+          unit: "%",
+          trend: 0,
+          trendLabel: "classifier probability",
+        },
       };
 
-    }, [filterFactor]);
+    }, [filterFactor, backendData]);
 
   /* -------------------------------------------------------
      SCALE CHART VALUES
   ------------------------------------------------------- */
 
-  const scaledSeries =
-    useMemo(() => {
+ const scaledSeries = useMemo(() => {
+  if (!backendData) {
+    return [];
+  }
 
-      return productionForecastSeries.map(
-        (point) => ({
+  const historicalPoints = backendData.historical.map((item) => ({
+    period: new Date(`${item.month}-01`).toLocaleString("en-US", {
+      month: "short",
+    }),
 
-          ...point,
+    historical: item.production_lakh_tonnes,
+    historicalLine: item.production_lakh_tonnes,
 
-          historical:
-            point.historical !== null
-              ? Math.round(
-                  point.historical *
-                    filterFactor
-                )
-              : null,
+    forecastBridge: null,
+    targetBridge: null,
+  }));
 
-          forecast:
-            point.forecast !== null
-              ? Math.round(
-                  point.forecast *
-                    filterFactor
-                )
-              : null,
+  // Connect BOTH forecast and target from latest actual month
+  if (historicalPoints.length > 0) {
+    const lastIndex = historicalPoints.length - 1;
+    const lastActual = historicalPoints[lastIndex].historical;
 
-          confidenceLow:
-            point.confidenceLow !== null
-              ? Math.round(
-                  point.confidenceLow *
-                    filterFactor
-                )
-              : null,
+    historicalPoints[lastIndex].forecastBridge = lastActual;
+    historicalPoints[lastIndex].targetBridge = lastActual;
+  }
 
-          confidenceHigh:
-            point.confidenceHigh !== null
-              ? Math.round(
-                  point.confidenceHigh *
-                    filterFactor
-                )
-              : null,
+  const forecastMonth = new Date(
+    backendData.prediction_date
+  ).toLocaleString("en-US", {
+    month: "short",
+  });
 
-          target:
-            point.target !== null
-              ? Math.round(
-                  point.target *
-                    filterFactor
-                )
-              : null,
-        })
-      );
+  return [
+    ...historicalPoints,
+    {
+      period: forecastMonth,
 
-    }, [filterFactor]);
+      historical: null,
+      historicalLine: null,
+
+      forecastBridge:
+        backendData.forecast_production_lakh_tonnes,
+
+      targetBridge:
+        backendData.expected_production_lakh_tonnes,
+    },
+  ];
+}, [backendData]);
 
   /* -------------------------------------------------------
      SCALE STATE PRODUCTION
