@@ -3,8 +3,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Prospectivity from "./pages/Prospectivity";
 import Production from "./pages/production";
-import RiskandShortfall from "./pages/RiskandShortfall";
+
 import ModelIntelligence from "./pages/ModelIntelligence";
+import AIRecommendations from "./pages/AiRecommendation";
 
 function App() {
   return (
@@ -29,12 +30,7 @@ function App() {
           element={<Production />}
         />
 
-        {/* Risk & Shortfall */}
-        <Route
-          path="/RiskandShortfall"
-          element={<RiskandShortfall />}
-        />
-
+        
         {/* Model Intelligence */}
         <Route
           path="/Modelintelligence"
@@ -46,6 +42,11 @@ function App() {
           path="/model-intelligence"
           element={<ModelIntelligence />}
         />
+        <Route
+        path="/Ai-recommendations"
+        element={<AIRecommendations/>
+        }
+        ></Route>
 
       </Routes>
     </BrowserRouter>

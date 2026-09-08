@@ -377,7 +377,26 @@ export default function Production() {
 
   return (
     <div className="relative min-h-screen bg-zenith-bg flex flex-col overflow-hidden">
-      <div className="fixed inset-0 z-0 pointer-events-none">
+
+      {/* Background image */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-[center_top] bg-no-repeat opacity-85"
+        style={{ backgroundImage: "url('/backgorund_pic.png')" }}
+        aria-hidden="true"
+      />
+
+      {/* Dark overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[1]"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(5,5,5,0.94) 0%, rgba(5,5,5,0.75) 38%, rgba(5,5,5,0.28) 100%), linear-gradient(180deg, rgba(5,5,5,0.12) 0%, rgba(5,5,5,0.72) 68%, rgba(5,5,5,0.96) 100%)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Cursor grid */}
+      <div className="fixed inset-0 z-[2] pointer-events-none">
         <CursorGrid color="#ffffff" opacity={0.08} />
       </div>
 
@@ -390,10 +409,12 @@ export default function Production() {
               <h1 className="font-display font-semibold text-3xl sm:text-4xl text-white tracking-tight">
                 PRODUCTION INTELLIGENCE
               </h1>
+
               <p className="text-text-secondary text-lg max-w-2xl">
                 Production history, model forecast, target output and
                 shortfall indicators returned directly by the backend.
               </p>
+
               <p className="text-xs text-text-muted">
                 Live backend data · no hardcoded production values
               </p>
@@ -405,6 +426,7 @@ export default function Production() {
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <span>{backendError}</span>
                 </div>
+
                 <button
                   onClick={loadProductionForecast}
                   className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 px-3 py-2 hover:bg-red-500/10"
@@ -416,17 +438,31 @@ export default function Production() {
             )}
 
             <section className="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-slide-up">
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 <ProductionKpiCard
                   label="Current Output"
                   value={currentOutput}
                   unit="Lakh Tonnes"
                   trend={currentTrend}
-                  trendLabel={latestHistorical ? `Latest actual (${latestHistorical.month})` : ""}
+                  trendLabel={
+                    latestHistorical
+                      ? `Latest actual (${latestHistorical.month})`
+                      : ""
+                  }
                 />
               </BorderGlow>
 
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 <ProductionKpiCard
                   label="Target Output"
                   value={targetOutput}
@@ -437,7 +473,12 @@ export default function Production() {
                 />
               </BorderGlow>
 
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 <ProductionKpiCard
                   label="Forecast Output"
                   value={forecastOutput}
@@ -448,19 +489,33 @@ export default function Production() {
                 />
               </BorderGlow>
 
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 <ProductionKpiCard
                   label="Predicted Shortfall"
                   value={shortfallPct}
                   unit="%"
                   trend={0}
-                  status={backendData?.classification === "YES" ? "Shortfall Expected" : "No Shortfall"}
+                  status={
+                    backendData?.classification === "YES"
+                      ? "Shortfall Expected"
+                      : "No Shortfall"
+                  }
                   trendLabel="Backend estimate"
                   accent="orange"
                 />
               </BorderGlow>
 
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 <ProductionKpiCard
                   label="Shortfall Probability"
                   value={shortfallProbability}
@@ -472,8 +527,16 @@ export default function Production() {
               </BorderGlow>
             </section>
 
-            <section className="animate-slide-up" style={{ animationDelay: "200ms" }}>
-              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+            <section
+              className="animate-slide-up"
+              style={{ animationDelay: "200ms" }}
+            >
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={80}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
                 {loading ? (
                   <div className="h-[430px] flex items-center justify-center bg-zenith-elevated/80 rounded-xl text-text-muted">
                     Loading production data from backend…

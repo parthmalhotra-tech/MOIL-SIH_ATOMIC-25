@@ -1,177 +1,333 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import CountUp from "../components/CountUp";
 import BorderGlow from "../components/borderglow";
+import CursorGrid from "../components/CursorGrid";
 
 import {
   Brain,
   Database,
   Activity,
-  RefreshCw,
-  Play,
-  CheckCircle,
   Clock,
   Layers,
+  RefreshCw,
 } from "lucide-react";
+
+/* ------------------------------------------------ */
+/* BACKEND CONFIG */
+/* ------------------------------------------------ */
+
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+/* ------------------------------------------------ */
+/* MODEL INFORMATION */
+/* ------------------------------------------------ */
 
 const modelInfo = {
   activeVersion: "v1.0",
-  availableVersions: ["v1.0", "v0.9", "v0.8"],
-  lastRetrained: "12 Aug 2026",
-  apiStatus: "Active",
+  availableVersions: ["v1.0"],
+  lastRetrained: "8 Sept 2026",
 };
 
-const performanceKpis = [
+/* ------------------------------------------------ */
+/* MODEL PERFORMANCE */
+/* ------------------------------------------------ */
+/*
+  Real values will be added here when provided.
+*/
+
+const modelPerformance = {
+  production: {
+    name: "Production Model",
+    description:
+      "Production forecasting and shortfall prediction",
+    rmse: null,
+    inferenceSpeed: null,
+  },
+
+  prospectivity: {
+    name: "Prospectivity Model",
+    description:
+      "Manganese prospectivity classification",
+    rmse: null,
+    inferenceSpeed: null,
+  },
+};
+
+/* ------------------------------------------------ */
+/* FEATURE IMPORTANCE */
+/* ------------------------------------------------ */
+
+/* Production Model */
+
+const productionFeatureImportance = [
   {
-    title: "Reserve Accuracy",
-    value: 94.2,
-    suffix: "%",
-    trend: "+2.1%",
+    name: "Rainfall Stress Index",
+    value: 23.67,
   },
   {
-    title: "Shortfall RMSE",
-    value: 8.6,
-    suffix: "%",
-    trend: "-1.4%",
+    name: "Production Lag 2M",
+    value: 19.20,
   },
   {
-    title: "Spatial Precision",
-    value: 91.7,
-    suffix: "%",
-    trend: "+3.2%",
+    name: "Soil-Moisture Stress Index",
+    value: 15.74,
   },
   {
-    title: "Inference Speed",
-    value: 42,
-    suffix: "ms",
-    trend: "-8.5%",
+    name: "Production Lag 1M",
+    value: 13.23,
+  },
+  {
+    name: "Expected Production",
+    value: 11.66,
+  },
+  {
+    name: "Month Progress",
+    value: 10.67,
+  },
+  {
+    name: "Production Lag 3M",
+    value: 5.83,
   },
 ];
 
-const featureImportance = [
-  { name: "Geological Structure", value: 28 },
-  { name: "Geochemical Signature", value: 24 },
-  { name: "Remote Sensing", value: 19 },
-  { name: "Mineral Occurrence", value: 15 },
-  { name: "Topography", value: 9 },
-  { name: "Distance to Fault", value: 5 },
+/* Prospectivity Model */
+
+const prospectivityFeatureImportance = [
+  {
+    name: "elevation_m",
+    value: 24.37,
+  },
+  {
+    name: "elev_relief_ratio",
+    value: 7.68,
+  },
+  {
+    name: "BSI",
+    value: 5.50,
+  },
+  {
+    name: "terrain_relief_m",
+    value: 5.40,
+  },
+  {
+    name: "B08",
+    value: 4.84,
+  },
+  {
+    name: "SWIR1_SWIR2_ratio",
+    value: 4.81,
+  },
+  {
+    name: "SWIR_difference",
+    value: 4.68,
+  },
+  {
+    name: "B03",
+    value: 4.40,
+  },
+  {
+    name: "SWIR_mean",
+    value: 3.99,
+  },
+  {
+    name: "terrain_complexity",
+    value: 3.80,
+  },
+  {
+    name: "B12",
+    value: 3.71,
+  },
+  {
+    name: "BLUE_RED_ratio",
+    value: 3.61,
+  },
+  {
+    name: "B02",
+    value: 3.54,
+  },
+  {
+    name: "slope_deg",
+    value: 3.26,
+  },
+  {
+    name: "NDWI",
+    value: 2.98,
+  },
+  {
+    name: "VIS_mean",
+    value: 2.87,
+  },
+  {
+    name: "BLUE_RED_diff",
+    value: 2.76,
+  },
+  {
+    name: "B11",
+    value: 2.72,
+  },
+  {
+    name: "spectral_mean",
+    value: 2.59,
+  },
+  {
+    name: "NIR_RED_diff",
+    value: 2.53,
+  },
 ];
+
+/* ------------------------------------------------ */
+/* DATASET LINEAGE */
+/* ------------------------------------------------ */
 
 const datasetLineage = [
   {
-    name: "Geological Survey Data",
-    type: "Spatial",
-    frequency: "Monthly",
+    name: "NASA POWER Environmental Data",
+    type: "Environmental",
+    frequency: "Updated daily",
   },
   {
-    name: "Geochemical Samples",
-    type: "Numeric",
-    frequency: "Weekly",
+    name: "MOIL Production Records",
+    type: "Production",
+    frequency: "Updated monthly",
   },
   {
     name: "Satellite Imagery",
     type: "Raster",
-    frequency: "Daily",
+    frequency: "Updated monthly",
   },
   {
-    name: "Mineral Occurrence Records",
+    name: "Terrain and geological data",
     type: "Spatial",
-    frequency: "Monthly",
+    frequency: "Updated on source refresh (static)",
   },
 ];
 
-const pipelineStages = [
-  "Data Ingestion",
-  "Data Fusion",
-  "Feature Engineering",
-  "ML Model",
-  "Prediction",
-];
-
 /* ------------------------------------------------ */
-/* KPI CARD */
+/* MODEL KPI CARD */
 /* ------------------------------------------------ */
 
-function ModelKpiCard({ item }) {
+function ModelKpiCard({
+  label,
+  value,
+  suffix = "",
+}) {
+  const hasValue =
+    value !== null &&
+    value !== undefined &&
+    Number.isFinite(Number(value));
+
+  const decimals =
+    hasValue && Number(value) % 1 !== 0 ? 2 : 0;
+
   return (
-    <div className="bg-zenith-elevated border border-zenith-border rounded-2xl">
+    <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border h-full">
       <div className="p-5">
+
         <p className="text-text-secondary text-sm">
-          {item.title}
+          {label}
         </p>
 
-        <div className="flex items-end gap-1 mt-2">
-          <span className="text-white text-2xl font-bold">
-            <CountUp
-              start={0}
-              end={item.value}
-              duration={1.5}
-              decimals={Number.isInteger(item.value) ? 0 : 1}
-            />
+        <div className="flex items-end gap-1.5 mt-2">
+
+          <span className="text-white text-2xl sm:text-3xl font-bold tabular-nums">
+            {hasValue ? (
+              <CountUp
+                start={0}
+                end={Number(value)}
+                duration={1.5}
+                decimals={decimals}
+              />
+            ) : (
+              "—"
+            )}
           </span>
 
-          <span className="text-text-secondary text-sm mb-1">
-            {item.suffix}
-          </span>
+          {hasValue && suffix && (
+            <span className="text-text-secondary text-sm mb-1">
+              {suffix}
+            </span>
+          )}
+
         </div>
 
-        <p className="text-green-400 text-xs mt-3">
-          {item.trend} vs previous version
+        <p className="text-text-muted text-xs mt-3">
+          {hasValue
+            ? "Current model value"
+            : "Data pending"}
         </p>
+
       </div>
     </div>
   );
 }
 
 /* ------------------------------------------------ */
-/* FEATURE IMPORTANCE */
+/* FEATURE IMPORTANCE PANEL */
 /* ------------------------------------------------ */
 
-function FeatureImportancePanel() {
+function FeatureImportancePanel({
+  title,
+  subtitle,
+  features,
+}) {
   return (
-    <div className="bg-zenith-elevated rounded-xl h-full border border-zenith-border">
+    <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl h-full border border-zenith-border">
+
       <div className="p-5 sm:p-6">
 
         <div className="flex items-center gap-3 mb-6">
-          <Layers className="w-5 h-5 text-zenith-accent" />
+
+          <div className="w-10 h-10 rounded-lg bg-zenith-accent/10 border border-zenith-accent/20 flex items-center justify-center">
+            <Layers className="w-5 h-5 text-zenith-accent" />
+          </div>
 
           <div>
             <h2 className="text-white text-lg font-semibold">
-              Feature Importance
+              {title}
             </h2>
 
             <p className="text-text-secondary text-xs mt-1">
-              Relative contribution to model predictions
+              {subtitle}
             </p>
           </div>
+
         </div>
 
         <div className="space-y-5">
-          {featureImportance.map((feature) => (
+
+          {features.map((feature) => (
+
             <div key={feature.name}>
 
-              <div className="flex justify-between mb-2">
-                <span className="text-white text-sm">
+              <div className="flex justify-between mb-2 gap-4">
+
+                <span className="text-white text-sm truncate">
                   {feature.name}
                 </span>
 
-                <span className="text-text-secondary text-sm">
-                  {feature.value}%
+                <span className="text-text-secondary text-sm font-mono shrink-0">
+                  {feature.value.toFixed(2)}%
                 </span>
+
               </div>
 
               <div className="h-2 bg-zenith-surface rounded-full overflow-hidden">
+
                 <div
-                  className="h-full bg-zenith-accent rounded-full transition-all"
+                  className="h-full bg-zenith-accent rounded-full transition-all duration-700"
                   style={{
                     width: `${feature.value}%`,
                   }}
                 />
+
               </div>
 
             </div>
+
           ))}
+
         </div>
 
       </div>
@@ -185,211 +341,78 @@ function FeatureImportancePanel() {
 
 function DatasetLineagePanel() {
   return (
-    <div className="bg-zenith-elevated rounded-xl h-full border border-zenith-border">
+    <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border">
+
       <div className="p-5 sm:p-6">
 
         <div className="flex items-center gap-3 mb-6">
-          <Database className="w-5 h-5 text-zenith-accent" />
+
+          <div className="w-10 h-10 rounded-lg bg-zenith-accent/10 border border-zenith-accent/20 flex items-center justify-center">
+
+            <Database className="w-5 h-5 text-zenith-accent" />
+
+          </div>
 
           <div>
+
             <h2 className="text-white text-lg font-semibold">
               Dataset Lineage
             </h2>
 
             <p className="text-text-secondary text-xs mt-1">
-              Sources feeding the current model
+              Data sources feeding the Hermes models
             </p>
+
           </div>
+
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
           {datasetLineage.map((dataset) => (
+
             <div
               key={dataset.name}
-              className="bg-zenith-surface rounded-xl p-4 border border-zenith-border"
+              className="bg-zenith-surface/80 rounded-xl p-4 border border-zenith-border transition-all hover:border-zenith-accent/30"
             >
 
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-white text-sm">
-                  {dataset.name}
-                </span>
+              <div className="flex items-start gap-3">
 
-                <span className="text-xs text-zenith-accent">
-                  {dataset.type}
-                </span>
-              </div>
+                <div className="mt-0.5 w-8 h-8 rounded-lg bg-white/[0.03] border border-zenith-border flex items-center justify-center shrink-0">
 
-              <div className="flex items-center gap-2 mt-2 text-xs text-text-secondary">
-                <Clock className="w-3.5 h-3.5" />
-                Updated {dataset.frequency}
-              </div>
+                  <Database className="w-4 h-4 text-text-secondary" />
 
-            </div>
-          ))}
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------ */
-/* PIPELINE SIMULATOR */
-/* ------------------------------------------------ */
-
-function PipelineSimulator() {
-  const [progress, setProgress] = useState(0);
-  const [running, setRunning] = useState(false);
-  const [inferenceResult, setInferenceResult] = useState(null);
-
-  const retrainModel = () => {
-    if (running) return;
-
-    setRunning(true);
-    setProgress(0);
-    setInferenceResult(null);
-
-    const interval = setInterval(() => {
-      setProgress((previous) => {
-        const next = previous + 10;
-
-        if (next >= 100) {
-          clearInterval(interval);
-          setRunning(false);
-          return 100;
-        }
-
-        return next;
-      });
-    }, 180);
-  };
-
-  const testInference = () => {
-    setInferenceResult(null);
-
-    setTimeout(() => {
-      setInferenceResult({
-        prospectivity_score: 0.812,
-        prospectivity_class: "High",
-        latency_ms: 42,
-      });
-    }, 900);
-  };
-
-  return (
-    <div className="bg-zenith-elevated rounded-xl border border-zenith-border">
-      <div className="p-5 sm:p-6">
-
-        <div className="flex items-center gap-3 mb-6">
-          <Brain className="w-5 h-5 text-zenith-accent" />
-
-          <div>
-            <h2 className="text-white text-lg font-semibold">
-              Model Pipeline
-            </h2>
-
-            <p className="text-text-secondary text-xs mt-1">
-              Simulate retraining and inference
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-center gap-2 mb-8">
-          {pipelineStages.map((stage, index) => (
-            <React.Fragment key={stage}>
-
-              <div className="flex-1 w-full text-center">
-                <div
-                  className={`rounded-xl border p-3 transition-all ${
-                    progress > index * 20
-                      ? "border-zenith-accent bg-zenith-accent/10"
-                      : "border-zenith-border bg-zenith-surface"
-                  }`}
-                >
-                  <span className="text-xs text-white">
-                    {stage}
-                  </span>
                 </div>
+
+                <div className="min-w-0">
+
+                  <p className="text-white text-sm font-medium">
+                    {dataset.name}
+                  </p>
+
+                  <span className="inline-flex mt-2 px-2 py-1 rounded-full bg-zenith-accent/10 border border-zenith-accent/20 text-[10px] uppercase tracking-wider text-zenith-accent">
+                    {dataset.type}
+                  </span>
+
+                </div>
+
               </div>
 
-              {index < pipelineStages.length - 1 && (
-                <span className="text-text-secondary hidden md:block">
-                  →
+              <div className="flex items-center gap-2 mt-4 text-xs text-text-secondary">
+
+                <Clock className="w-3.5 h-3.5 text-text-muted" />
+
+                <span>
+                  {dataset.frequency}
                 </span>
-              )}
 
-            </React.Fragment>
+              </div>
+
+            </div>
+
           ))}
-        </div>
-
-        {running && (
-          <div className="mb-6">
-
-            <div className="flex justify-between text-xs mb-2">
-              <span className="text-text-secondary">
-                Retraining model...
-              </span>
-
-              <span className="text-white">
-                {progress}%
-              </span>
-            </div>
-
-            <div className="h-2 bg-zenith-surface rounded-full overflow-hidden">
-              <div
-                className="h-full bg-zenith-accent rounded-full transition-all"
-                style={{
-                  width: `${progress}%`,
-                }}
-              />
-            </div>
-
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-3">
-
-          <button
-            onClick={retrainModel}
-            disabled={running}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zenith-accent text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${
-                running ? "animate-spin" : ""
-              }`}
-            />
-
-            {running ? "Retraining..." : "Retrain Model"}
-          </button>
-
-          <button
-            onClick={testInference}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zenith-surface border border-zenith-border text-white text-sm font-medium hover:border-zenith-accent/50"
-          >
-            <Play className="w-4 h-4" />
-            Test Inference
-          </button>
 
         </div>
-
-        {inferenceResult && (
-          <div className="mt-6 bg-black/20 border border-zenith-border rounded-xl p-4">
-
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-green-400" />
-
-              <span className="text-white text-sm font-medium">
-                Inference Complete
-              </span>
-            </div>
-
-            <pre className="text-xs text-text-secondary overflow-x-auto">
-              {JSON.stringify(inferenceResult, null, 2)}
-            </pre>
-
-          </div>
-        )}
 
       </div>
     </div>
@@ -401,204 +424,457 @@ function PipelineSimulator() {
 /* ------------------------------------------------ */
 
 export default function ModelIntelligence() {
+  const [apiStatus, setApiStatus] = useState("Checking...");
+  const [apiChecking, setApiChecking] = useState(true);
+
+  const checkApiStatus = async () => {
+    try {
+      setApiChecking(true);
+      setApiStatus("Checking...");
+
+      const response = await fetch(
+        `${API_BASE_URL}/health`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Backend returned ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data?.status === "ok") {
+        setApiStatus("Connected");
+      } else {
+        setApiStatus("Unavailable");
+      }
+    } catch (error) {
+      console.error(
+        "Backend health check failed:",
+        error
+      );
+
+      setApiStatus("Disconnected");
+    } finally {
+      setApiChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    checkApiStatus();
+  }, []);
+
   return (
-    <>
-      {/* 
-        PAGE-SCOPED FIX
+    <div className="model-intelligence-page min-h-screen bg-zenith-bg text-white relative overflow-hidden">
 
-        This disables cursor/spotlight pseudo-elements that may be
-        coming from globally loaded CSS or shared components.
+      {/* Background Image */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-[center_top] bg-no-repeat opacity-85"
+        style={{
+          backgroundImage:
+            "url('/backgorund_pic.png')",
+        }}
+        aria-hidden="true"
+      />
 
-        It only applies while this page is rendered.
-      */}
-      <style>{`
-        .model-intelligence-page *,
-        .model-intelligence-page *::before,
-        .model-intelligence-page *::after {
-          --glow-x: none !important;
-          --glow-y: none !important;
-        }
+      {/* Dark Overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[1]"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(5,5,5,0.94) 0%, rgba(5,5,5,0.75) 38%, rgba(5,5,5,0.28) 100%), linear-gradient(180deg, rgba(5,5,5,0.12) 0%, rgba(5,5,5,0.72) 68%, rgba(5,5,5,0.96) 100%)",
+        }}
+        aria-hidden="true"
+      />
 
-        .model-intelligence-page [class*="spotlight"],
-        .model-intelligence-page [class*="cursor-grid"] {
-          background-image: none !important;
-          box-shadow: none !important;
-          filter: none !important;
-        }
+      {/* Cursor Grid */}
+      <div className="fixed inset-0 z-[2] pointer-events-none">
+        <CursorGrid
+          color="#ffffff"
+          opacity={0.08}
+        />
+      </div>
 
-        .model-intelligence-page::before,
-        .model-intelligence-page::after {
-          display: none !important;
-          content: none !important;
-        }
-      `}</style>
+      {/* Page */}
+      <div className="relative z-10 flex min-h-screen flex-col">
 
-      <div className="model-intelligence-page min-h-screen bg-zenith-bg text-white relative overflow-hidden">
+        <Navbar />
 
-        <div className="relative z-10">
+        <main className="pt-24 pb-16">
 
-          <Navbar />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <main className="pt-24 pb-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* HEADER */}
 
-              {/* HEADER */}
+            <section className="mb-8">
 
-              <div className="mb-8">
+              <div className="flex items-center gap-3 mb-3">
 
-                <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-zenith-accent/10 border border-zenith-accent/20 flex items-center justify-center">
 
-                  <div className="w-10 h-10 rounded-xl bg-zenith-accent/10 flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-zenith-accent" />
-                  </div>
-
-                  <span className="text-zenith-accent text-sm font-medium">
-                    AI / ML Intelligence
-                  </span>
+                  <Brain className="w-5 h-5 text-zenith-accent" />
 
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl font-bold">
-                  Model Intelligence
-                </h1>
-
-                <p className="text-text-secondary mt-2 max-w-2xl">
-                  Monitor model performance, feature importance,
-                  dataset lineage and prediction infrastructure.
-                </p>
+                <span className="text-zenith-accent text-sm font-medium">
+                  AI / ML Intelligence
+                </span>
 
               </div>
 
-              {/* MODEL STATUS */}
+              <h1 className="text-3xl sm:text-4xl font-bold">
+                Model Intelligence
+              </h1>
 
-              <div className="mb-6 bg-zenith-elevated rounded-xl border border-zenith-border">
+              <p className="text-text-secondary mt-2 max-w-2xl">
+                Monitor model performance, feature importance,
+                dataset lineage and prediction infrastructure.
+              </p>
 
-                <div className="p-5">
+            </section>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* MODEL STATUS */}
 
-                    <div>
-                      <p className="text-text-secondary text-xs">
-                        Active Version
-                      </p>
+            <section className="mb-8">
 
-                      <p className="text-white font-semibold mt-1">
-                        {modelInfo.activeVersion}
-                      </p>
-                    </div>
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={100}
+                glowIntensity={1.1}
+                borderRadius={24}
+              >
 
-                    <div>
-                      <p className="text-text-secondary text-xs">
-                        Last Retrained
-                      </p>
+                <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border">
 
-                      <p className="text-white font-semibold mt-1">
-                        {modelInfo.lastRetrained}
-                      </p>
-                    </div>
+                  <div className="p-5">
 
-                    <div>
-                      <p className="text-text-secondary text-xs">
-                        API Status
-                      </p>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
 
-                      <div className="flex items-center gap-2 mt-1">
+                      <div>
 
-                        <span className="w-2 h-2 rounded-full bg-green-400" />
+                        <p className="text-text-secondary text-xs">
+                          Active Version
+                        </p>
 
-                        <p className="text-green-400 font-semibold">
-                          {modelInfo.apiStatus}
+                        <p className="text-white font-semibold mt-1">
+                          {modelInfo.activeVersion}
                         </p>
 
                       </div>
+
+                      <div>
+
+                        <p className="text-text-secondary text-xs">
+                          Last Retrained
+                        </p>
+
+                        <p className="text-white font-semibold mt-1">
+                          {modelInfo.lastRetrained}
+                        </p>
+
+                      </div>
+
+                      <div>
+
+                        <p className="text-text-secondary text-xs">
+                          API Status
+                        </p>
+
+                        <div className="flex items-center gap-2 mt-1">
+
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              apiChecking
+                                ? "bg-yellow-400 animate-pulse"
+                                : apiStatus === "Connected"
+                                ? "bg-green-400"
+                                : "bg-red-400"
+                            }`}
+                          />
+
+                          <p
+                            className={`font-semibold ${
+                              apiChecking
+                                ? "text-yellow-400"
+                                : apiStatus === "Connected"
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {apiStatus}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <div>
+
+                        <p className="text-text-secondary text-xs">
+                          Available Versions
+                        </p>
+
+                        <p className="text-white font-semibold mt-1">
+                          {modelInfo.availableVersions.length}
+                        </p>
+
+                      </div>
+
                     </div>
 
-                    <div>
-                      <p className="text-text-secondary text-xs">
-                        Available Versions
-                      </p>
+                    {/* Manual status check */}
 
-                      <p className="text-white font-semibold mt-1">
-                        {modelInfo.availableVersions.length}
-                      </p>
+                    <div className="mt-5 pt-4 border-t border-zenith-border flex justify-end">
+
+                      <button
+                        onClick={checkApiStatus}
+                        disabled={apiChecking}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-zenith-surface border border-zenith-border text-xs text-text-secondary hover:text-white hover:border-zenith-accent/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${
+                            apiChecking
+                              ? "animate-spin"
+                              : ""
+                          }`}
+                        />
+
+                        Check Connection
+
+                      </button>
+
                     </div>
 
                   </div>
 
                 </div>
 
+              </BorderGlow>
+
+            </section>
+
+            {/* MODEL PERFORMANCE */}
+
+            <section className="mb-8">
+
+              <div className="flex items-center gap-2 mb-6">
+
+                <Activity className="w-4 h-4 text-zenith-accent" />
+
+                <h2 className="text-white font-semibold">
+                  Model Performance
+                </h2>
+
               </div>
 
-              {/* PERFORMANCE */}
+              {/* Production Model */}
 
-              <div className="mb-6">
+              <div className="mb-7">
 
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-3">
 
-                  <Activity className="w-4 h-4 text-zenith-accent" />
+                  <h3 className="text-white font-semibold text-base">
+                    Production Model
+                  </h3>
 
-                  <h2 className="text-white font-semibold">
-                    Model Performance
-                  </h2>
+                  <p className="text-text-muted text-xs mt-1">
+                    {modelPerformance.production.description}
+                  </p>
 
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                  {performanceKpis.map((item) => (
-                      <BorderGlow
-      
-      glowColor="#ffffff"
-                  glowRadius={80}
-                  glowIntensity={1.2}
-                  borderRadius={24}
-    >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  <BorderGlow
+                    glowColor="#ffffff"
+                    glowRadius={80}
+                    glowIntensity={1.2}
+                    borderRadius={24}
+                  >
+
                     <ModelKpiCard
-                      key={item.title}
-                      item={item}
+                      label="RMSE"
+                      value={
+                        modelPerformance.production.rmse
+                      }
                     />
-                    </BorderGlow>
-                  ))}
+
+                  </BorderGlow>
+
+                  <BorderGlow
+                    glowColor="#ffffff"
+                    glowRadius={80}
+                    glowIntensity={1.2}
+                    borderRadius={24}
+                  >
+
+                    <ModelKpiCard
+                      label="Inference Speed"
+                      value={
+                        modelPerformance.production.inferenceSpeed
+                      }
+                      suffix="ms"
+                    />
+
+                  </BorderGlow>
 
                 </div>
 
               </div>
 
-              {/* FEATURES + DATASETS */}
+              {/* Prospectivity Model */}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                   <BorderGlow
-      
-      glowColor="#ffffff"
-                  glowRadius={80}
+              <div>
+
+                <div className="mb-3">
+
+                  <h3 className="text-white font-semibold text-base">
+                    Prospectivity Model
+                  </h3>
+
+                  <p className="text-text-muted text-xs mt-1">
+                    {modelPerformance.prospectivity.description}
+                  </p>
+
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  <BorderGlow
+                    glowColor="#ffffff"
+                    glowRadius={80}
+                    glowIntensity={1.2}
+                    borderRadius={24}
+                  >
+
+                    <ModelKpiCard
+                      label="RMSE"
+                      value={
+                        modelPerformance.prospectivity.rmse
+                      }
+                    />
+
+                  </BorderGlow>
+
+                  <BorderGlow
+                    glowColor="#ffffff"
+                    glowRadius={80}
+                    glowIntensity={1.2}
+                    borderRadius={24}
+                  >
+
+                    <ModelKpiCard
+                      label="Inference Speed"
+                      value={
+                        modelPerformance.prospectivity
+                          .inferenceSpeed
+                      }
+                      suffix="ms"
+                    />
+
+                  </BorderGlow>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* FEATURE IMPORTANCE */}
+
+            <section className="mb-8">
+
+              <div className="flex items-center gap-2 mb-6">
+
+                <Layers className="w-4 h-4 text-zenith-accent" />
+
+                <h2 className="text-white font-semibold">
+                  Feature Importance
+                </h2>
+
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={90}
                   glowIntensity={1.2}
                   borderRadius={24}
-    >
-                <FeatureImportancePanel />
+                >
+
+                  <FeatureImportancePanel
+                    title="Production Model"
+                    subtitle="Relative contribution to production predictions"
+                    features={
+                      productionFeatureImportance
+                    }
+                  />
+
                 </BorderGlow>
- <BorderGlow
-      
-      glowColor="#ffffff"
-                  glowRadius={80}
+
+                <BorderGlow
+                  glowColor="#ffffff"
+                  glowRadius={90}
                   glowIntensity={1.2}
                   borderRadius={24}
-    >
+                >
+
+                  <FeatureImportancePanel
+                    title="Prospectivity Model"
+                    subtitle="Relative contribution to prospectivity predictions"
+                    features={
+                      prospectivityFeatureImportance
+                    }
+                  />
+
+                </BorderGlow>
+
+              </div>
+
+            </section>
+
+            {/* DATASET LINEAGE */}
+
+            <section>
+
+              <div className="flex items-center gap-2 mb-6">
+
+                <Database className="w-4 h-4 text-zenith-accent" />
+
+                <h2 className="text-white font-semibold">
+                  Dataset Lineage
+                </h2>
+
+              </div>
+
+              <BorderGlow
+                glowColor="#ffffff"
+                glowRadius={90}
+                glowIntensity={1.2}
+                borderRadius={24}
+              >
 
                 <DatasetLineagePanel />
-</BorderGlow>
-              </div>
 
-              {/* PIPELINE */}
+              </BorderGlow>
 
-              <PipelineSimulator />
+            </section>
 
-            </div>
-          </main>
+          </div>
 
-          <Footer />
+        </main>
 
-        </div>
+        <Footer />
+
       </div>
-    </>
+
+    </div>
   );
 }
