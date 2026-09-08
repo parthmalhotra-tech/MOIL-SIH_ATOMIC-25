@@ -42,8 +42,8 @@ const modelPerformance = {
     name: "Production Model",
     description:
       "Production forecasting and shortfall prediction",
-    rmse: null,
-    inferenceSpeed: null,
+    rmse: 2.54,
+    inferenceSpeed: 42 ,
   },
 
   prospectivity: {

@@ -92,7 +92,7 @@ const initialRecommendations = [
     status: "Recommended",
     evidence: [
       ["Signal", "Multi-model"],
-      ["Source", "Hermes outputs"],
+      ["Source", " outputs"],
       ["Decision", "Decision support"],
     ],
   },
@@ -226,7 +226,7 @@ export default function AIRecommendations() {
   const generateRecommendations = () => {
     if (generating) return;
     setGenerating(true);
-    setStatus("Analyzing Hermes data...");
+    setStatus("Analyzing data...");
     window.setTimeout(() => {
       setGenerating(false);
       setStatus("Analysis complete");
@@ -261,7 +261,7 @@ export default function AIRecommendations() {
                 AI Recommendations
               </h1>
               <p className="mt-4 max-w-3xl text-base sm:text-lg text-text-secondary leading-relaxed">
-                Convert Hermes model outputs into prioritized, explainable actions for exploration and operational planning.
+                Convert model outputs into prioritized, explainable actions for exploration and operational planning.
               </p>
             </div>
 
@@ -272,7 +272,7 @@ export default function AIRecommendations() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white text-zenith-bg font-semibold transition-all hover:bg-text-secondary disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
             >
               {generating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {generating ? "Analyzing Hermes Data..." : "Generate AI Recommendations"}
+              {generating ? "Analyzing  Data..." : "Generate AI Recommendations"}
             </button>
           </section>
 
@@ -307,7 +307,7 @@ export default function AIRecommendations() {
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
                   <div>
                     <h2 className="font-display text-2xl font-semibold">Recommendation Queue</h2>
-                    <p className="mt-1 text-sm text-text-muted">Prioritized actions from Hermes model signals.</p>
+                    <p className="mt-1 text-sm text-text-muted">Prioritized actions from model signals.</p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div className="relative">
@@ -433,7 +433,7 @@ export default function AIRecommendations() {
                     </div>
                     <div>
                       <h2 className="font-display font-semibold text-lg">Decision Context</h2>
-                      <p className="text-xs text-text-muted">Current Hermes outputs</p>
+                      <p className="text-xs text-text-muted">Current outputs</p>
                     </div>
                   </div>
 
