@@ -549,12 +549,6 @@ export default function AIRecommendations() {
               <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] p-5">
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-white">AI recommendation engine</p>
-                    <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">
-                      The page is structured for Gemini responses. The visible recommendation cards are UI placeholders until the Gemini backend is connected.
-                    </p>
-                  </div>
                 </div>
               </div>
             </aside>
