@@ -6,6 +6,10 @@ class Settings(BaseSettings):
         "http://localhost:5173,"
         "http://localhost:5176"
     )
+
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-3.8-flash"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
