@@ -11,11 +11,11 @@ import pandas as pd
 #   lag 3 = June 2026
 # ============================================================
 
-JUNE_2026_PRODUCTION = 2.58
-JULY_2026_PRODUCTION = 2.61
-AUGUST_2026_PRODUCTION = 2.49
+JUNE_2026_PRODUCTION = 1.68
+JULY_2026_PRODUCTION = 1.45
+AUGUST_2026_PRODUCTION = 1.45
 
-SEPTEMBER_2026_TARGET = 2.70
+SEPTEMBER_2026_TARGET = 1.52
 
 def get_production_context(prediction_date) -> dict:
     """
