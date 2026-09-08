@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BorderGlow from "../components/borderglow";
@@ -6,22 +6,16 @@ import CursorGrid from "../components/CursorGrid";
 import { getProductionForecast } from "../services/productionService";
 
 import {
-  ChevronDown,
-  MapPin,
-  Pickaxe,
-  CalendarDays,
   TrendingUp,
   TrendingDown,
   Minus,
-  Database,
-  Trophy,
-  Medal,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
 import {
   ComposedChart,
   Area,
-  Bar,
   Line,
   XAxis,
   YAxis,
@@ -31,529 +25,41 @@ import {
   Legend,
 } from "recharts";
 
-/* =========================================================
-   FILTER DATA
-========================================================= */
-
-const filterOptions = {
-  states: [
-    "Select State",
-    "Odisha",
-    "Jharkhand",
-    "Chhattisgarh",
-    "Rajasthan",
-  ],
-
-  districts: {
-    "Select State": ["Select City"],
-
-    Odisha: [
-      "Select City",
-      "Keonjhar",
-      "Sundargarh",
-      "Mayurbhanj",
-    ],
-
-    Jharkhand: [
-      "Select City",
-      "Singhbhum",
-      "Ramgarh",
-      "Dhanbad",
-    ],
-
-    Chhattisgarh: [
-      "Select City",
-      "Korba",
-      "Bastar",
-      "Surguja",
-    ],
-
-    Rajasthan: [
-      "Select City",
-      "Bhilwara",
-      "Udaipur",
-      "Ajmer",
-    ],
-  },
-
-  mines: {
-    "Select City": ["Select Mine"],
-
-    Keonjhar: [
-      "Select Mine",
-      "Joda Mine",
-      "Barbil Mine",
-    ],
-
-    Sundargarh: [
-      "Select Mine",
-      "Sundargarh Central",
-      "Koida Mine",
-    ],
-
-    Mayurbhanj: [
-      "Select Mine",
-      "Gorumahisani",
-    ],
-
-    Singhbhum: [
-      "Select Mine",
-      "Noamundi Mine",
-    ],
-
-    Ramgarh: [
-      "Select Mine",
-      "Rajrappa Mine",
-    ],
-
-    Dhanbad: [
-      "Select Mine",
-      "Jharia Mine",
-    ],
-
-    Korba: [
-      "Select Mine",
-      "Gevra Mine",
-      "Dipka Mine",
-    ],
-
-    Bastar: [
-      "Select Mine",
-      "Bailadila Mine",
-    ],
-
-    Surguja: [
-      "Select Mine",
-      "Hasdeo Mine",
-    ],
-
-    Bhilwara: [
-      "Select Mine",
-      "Bhilwara Central",
-    ],
-
-    Udaipur: [
-      "Select Mine",
-      "Zawar Mine",
-    ],
-
-    Ajmer: [
-      "Select Mine",
-      "Ajmer Mine",
-    ],
-  },
-
-  years: [
-    "2024",
-    "2025",
-    "2026",
-  ],
-};
-
-/* =========================================================
-   PRODUCTION KPI DATA
-========================================================= */
-
-const productionKpis = {
-  currentOutput: {
-    label: "Current Output",
-    value: 48200,
-    unit: "t",
-    trend: 4.8,
-    trendLabel: "vs previous period",
-  },
-
-  targetOutput: {
-    label: "Target Output",
-    value: 51000,
-    unit: "t",
-    trend: 0,
-    trendLabel: "planned",
-  },
-
-  forecastOutput: {
-    label: "Forecast Output",
-    value: 53400,
-    unit: "t",
-    trend: 7.2,
-    trendLabel: "model forecast",
-  },
-
-  variance: {
-    label: "Target Variance",
-    value: -5.5,
-    unit: "%",
-    status: "Below Target",
-    trend: -5.5,
-    trendLabel: "current vs target",
-  },
-
-  confidence: {
-    label: "Forecast Confidence",
-    value: 91.4,
-    unit: "%",
-    trend: 2.3,
-    trendLabel: "model confidence",
-  },
-};
-
-/* =========================================================
-   CHART DATA
-========================================================= */
-
-const productionForecastSeries = [
-  {
-    period: "Jan",
-    historical: 42000,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 45000,
-  },
-
-  {
-    period: "Feb",
-    historical: 43800,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 45000,
-  },
-
-  {
-    period: "Mar",
-    historical: 45200,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 46000,
-  },
-
-  {
-    period: "Apr",
-    historical: 46800,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 47000,
-  },
-
-  {
-    period: "May",
-    historical: 47500,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 48000,
-  },
-
-  {
-    period: "Jun",
-    historical: 48200,
-    forecast: null,
-    confidenceLow: null,
-    confidenceHigh: null,
-    target: 49000,
-  },
-
-  {
-    period: "Jul",
-    historical: null,
-    forecast: 49500,
-    confidenceLow: 47000,
-    confidenceHigh: 52000,
-    target: 50000,
-  },
-
-  {
-    period: "Aug",
-    historical: null,
-    forecast: 50800,
-    confidenceLow: 48000,
-    confidenceHigh: 53600,
-    target: 50500,
-  },
-
-  {
-    period: "Sep",
-    historical: null,
-    forecast: 51900,
-    confidenceLow: 48700,
-    confidenceHigh: 55000,
-    target: 51000,
-  },
-
-  {
-    period: "Oct",
-    historical: null,
-    forecast: 52800,
-    confidenceLow: 49200,
-    confidenceHigh: 56400,
-    target: 51500,
-  },
-
-  {
-    period: "Nov",
-    historical: null,
-    forecast: 53600,
-    confidenceLow: 49800,
-    confidenceHigh: 57400,
-    target: 52000,
-  },
-
-  {
-    period: "Dec",
-    historical: null,
-    forecast: 54800,
-    confidenceLow: 50500,
-    confidenceHigh: 59100,
-    target: 52500,
-  },
-];
-
-/* =========================================================
-   DATA ORIGIN
-========================================================= */
-
-const dataOrigin = [
-  "Production Records",
-  "Mine Telemetry",
-  "Historical Output",
-  "Operational Reports",
-];
-
-/* =========================================================
-   STATE PRODUCTION DATA
-========================================================= */
-
-const stateProductionData = [
-  {
-    state: "Odisha",
-    production: 128400,
-  },
-  {
-    state: "Jharkhand",
-    production: 113200,
-  },
-  {
-    state: "Chhattisgarh",
-    production: 98400,
-  },
-  {
-    state: "Rajasthan",
-    production: 76200,
-  },
-];
-
-/* =========================================================
-   CURSOR GRID
-========================================================= */
-
-
-
-/* =========================================================
-   COUNT UP
-========================================================= */
-
-function CountUp({
-  end,
-  duration = 1.4,
-  decimals = 0,
-}) {
+function CountUp({ end = 0, duration = 1.2, decimals = 0 }) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
-    let animationFrame;
+    const target = Number(end) || 0;
+    let frame;
     let startTime = null;
 
     const animate = (timestamp) => {
-      if (startTime === null) {
-        startTime = timestamp;
-      }
-
-      const elapsed =
-        timestamp - startTime;
+      if (startTime === null) startTime = timestamp;
 
       const progress = Math.min(
-        elapsed /
-          (duration * 1000),
+        (timestamp - startTime) / (duration * 1000),
         1
       );
+      const eased = 1 - Math.pow(1 - progress, 3);
 
-      const eased =
-        1 -
-        Math.pow(
-          1 - progress,
-          3
-        );
-
-      setValue(end * eased);
+      setValue(target * eased);
 
       if (progress < 1) {
-        animationFrame =
-          requestAnimationFrame(
-            animate
-          );
+        frame = requestAnimationFrame(animate);
       } else {
-        setValue(end);
+        setValue(target);
       }
     };
 
-    animationFrame =
-      requestAnimationFrame(
-        animate
-      );
-
-    return () => {
-      cancelAnimationFrame(
-        animationFrame
-      );
-    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
   }, [end, duration]);
 
-  return value.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits:
-        decimals,
-
-      maximumFractionDigits:
-        decimals,
-    }
-  );
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 }
-
-/* =========================================================
-   FILTER SELECT
-========================================================= */
-
-function FilterSelect({
-  icon: Icon,
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}) {
-  return (
-    <div className="relative">
-
-      <Icon
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-        aria-hidden="true"
-      />
-
-      <select
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        className="appearance-none pl-10 pr-9 py-2.5 rounded-lg bg-zenith-surface border border-zenith-border text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all cursor-pointer"
-        aria-label={ariaLabel}
-      >
-
-        {options.map((option) => (
-          <option
-            key={option}
-            value={option}
-          >
-            {option}
-          </option>
-        ))}
-
-      </select>
-
-      <ChevronDown
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-        aria-hidden="true"
-      />
-
-    </div>
-  );
-}
-
-/* =========================================================
-   PRODUCTION FILTER BAR
-========================================================= */
-
-function ProductionFilterBar({
-  filters,
-  onChange,
-}) {
-  const cityOptions =
-    filterOptions.districts[
-      filters.state
-    ] || ["Select City"];
-
-  const mineOptions =
-    filterOptions.mines[
-      filters.district
-    ] || ["Select Mine"];
-
-  return (
-    <section className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border p-4 sm:p-6">
-
-      <div className="flex flex-wrap items-center gap-3">
-
-        <FilterSelect
-          icon={MapPin}
-          ariaLabel="Select state"
-          value={filters.state}
-          onChange={(value) =>
-            onChange({
-              state: value,
-              district: "Select City",
-              mine: "Select Mine",
-            })
-          }
-          options={filterOptions.states}
-        />
-
-        <FilterSelect
-          icon={MapPin}
-          ariaLabel="Select city"
-          value={filters.district}
-          onChange={(value) =>
-            onChange({
-              district: value,
-              mine: "Select Mine",
-            })
-          }
-          options={cityOptions}
-        />
-
-        <FilterSelect
-          icon={Pickaxe}
-          ariaLabel="Select mine"
-          value={filters.mine}
-          onChange={(value) =>
-            onChange({
-              mine: value,
-            })
-          }
-          options={mineOptions}
-        />
-
-        <FilterSelect
-          icon={CalendarDays}
-          ariaLabel="Filter by year"
-          value={filters.year}
-          onChange={(value) =>
-            onChange({
-              year: value,
-            })
-          }
-          options={filterOptions.years}
-        />
-
-      </div>
-
-    </section>
-  );
-}
-
-/* =========================================================
-   KPI CARD
-========================================================= */
 
 function ProductionKpiCard({
   label,
@@ -564,250 +70,132 @@ function ProductionKpiCard({
   status,
   accent = "white",
 }) {
-  const colorMap = {
+  const accentColors = {
     white: "#ffffff",
-    purple: "#a78bfa",
-    orange: "#f97316",
     red: "#ef4444",
+    orange: "#f97316",
     green: "#22c55e",
   };
 
-  const accentColor =
-    colorMap[accent] ||
-    colorMap.white;
-
-  const hasTrend =
-    typeof trend === "number" &&
-    trend !== 0;
-
-  const isPositive =
-    hasTrend && trend > 0;
-
-  const decimals =
-  unit === "Lakh Tonnes"
-    ? 2
-    : typeof value === "number" &&
-      !Number.isInteger(value)
-    ? 1
-    : 0;
+  const accentColor = accentColors[accent] || accentColors.white;
+  const numericValue = Number(value) || 0;
+  const hasTrend = typeof trend === "number" && trend !== 0;
+  const isPositive = hasTrend && trend > 0;
+  const decimals = unit === "%" ? 1 : numericValue % 1 !== 0 ? 2 : 0;
 
   return (
-    <div
-      className="group bg-zenith-elevated/80 backdrop-blur-xl rounded-xl p-5 border border-zenith-border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-red-400/40"
-    >
-
+    <div className="group bg-zenith-elevated/80 backdrop-blur-xl rounded-xl p-5 border border-zenith-border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-red-400/40">
       <div
         className="absolute top-0 left-0 right-0 h-1"
-        style={{
-          backgroundColor:
-            accentColor,
-        }}
-      />
-
-      <div
-        className="absolute -top-20 -right-20 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500"
-        style={{
-          backgroundColor:
-            accentColor,
-        }}
+        style={{ backgroundColor: accentColor }}
       />
 
       <div className="relative z-10 space-y-2">
-
         <span className="text-sm font-medium text-text-secondary">
           {label}
         </span>
 
         <div className="flex items-baseline gap-1.5">
-
           <p className="font-display font-bold text-white text-2xl sm:text-3xl tabular-nums">
-
-            <CountUp
-              end={value}
-              duration={1.4}
-              decimals={decimals}
-            />
-
+            <CountUp end={numericValue} decimals={decimals} />
           </p>
-
-          {unit && (
-            <span className="text-text-muted text-sm">
-              {unit}
-            </span>
-          )}
-
+          {unit && <span className="text-text-muted text-sm">{unit}</span>}
         </div>
 
         <div className="flex items-center gap-1.5 text-xs flex-wrap">
-
           {status && (
             <span
               className="px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide"
               style={{
-                backgroundColor:
-                  `${accentColor}20`,
-                color:
-                  accentColor,
-                border:
-                  `1px solid ${accentColor}40`,
+                backgroundColor: `${accentColor}20`,
+                color: accentColor,
+                border: `1px solid ${accentColor}40`,
               }}
             >
               {status}
             </span>
           )}
 
-          {hasTrend && (
+          {hasTrend ? (
             <span
-              className={
-                `inline-flex items-center gap-0.5 ${
-                  isPositive
-                    ? "text-emerald-400"
-                    : "text-red-400"
-                }`
-              }
+              className={`inline-flex items-center gap-0.5 ${
+                isPositive ? "text-emerald-400" : "text-red-400"
+              }`}
             >
-
               {isPositive ? (
                 <TrendingUp className="w-3 h-3" />
               ) : (
                 <TrendingDown className="w-3 h-3" />
               )}
-
-              {Math.abs(trend)}%
-
+              {Math.abs(trend).toFixed(1)}%
             </span>
+          ) : (
+            <Minus className="w-3 h-3 text-text-muted" />
           )}
-
-          {!hasTrend &&
-            !status && (
-              <Minus className="w-3 h-3 text-text-muted" />
-            )}
 
           {trendLabel && (
-            <span className="text-text-muted">
-              {trendLabel}
-            </span>
+            <span className="text-text-muted">{trendLabel}</span>
           )}
-
         </div>
-
       </div>
     </div>
   );
 }
 
-/* =========================================================
-   CHART TOOLTIP
-========================================================= */
-
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}) {
-  if (
-    !active ||
-    !payload ||
-    !payload.length
-  ) {
-    return null;
-  }
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
 
   return (
     <div className="bg-zenith-bg/95 backdrop-blur-xl border border-zenith-border rounded-lg px-4 py-3 shadow-2xl">
-
       <p className="text-xs uppercase tracking-widest text-text-muted mb-3">
         {label}
       </p>
 
       {payload
-        .filter(
-          (item) =>
-            item.value !== null &&
-            item.value !== undefined &&
-            item.dataKey !== "confidenceHigh" &&
-            item.dataKey !== "confidenceLow"
-        )
+        .filter((item) => item.value !== null && item.value !== undefined)
         .map((item) => (
           <div
             key={item.dataKey}
             className="flex items-center justify-between gap-8 text-sm mb-1"
           >
-
-            <span className="text-text-secondary">
-              {item.name}
-            </span>
-
+            <span className="text-text-secondary">{item.name}</span>
             <span className="font-mono text-white tabular-nums">
               {Number(item.value).toFixed(2)} Lakh Tonnes
             </span>
-
           </div>
         ))}
-
     </div>
   );
 }
 
-/* =========================================================
-   PRODUCTION FORECAST CHART
-========================================================= */
-
-function ProductionForecastMainChart({
-  data,
-}) {
-  const formatYAxis = (value) =>
-    Number(value).toFixed(1);
+function ProductionForecastMainChart({ data }) {
   return (
     <div className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border p-4 sm:p-6">
-
       <div className="flex items-center justify-between mb-4">
-
         <div>
-
           <h2 className="font-display font-semibold text-white text-lg">
             Historical vs Forecast Output
           </h2>
-
           <p className="text-sm text-text-muted">
-            Production in Lakh Tonnes
+            Values returned by the production API
           </p>
-
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-text-muted">
-
           <span className="w-2 h-2 rounded-full bg-zinc-500" />
-
           Historical
-
           <span className="w-2 h-2 rounded-full bg-red-500 ml-3" />
-
           Forecast
-
         </div>
-
       </div>
 
       <div className="h-[380px] w-full">
-
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-        >
-
+        <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={data}
-            margin={{
-              top: 10,
-              right: 12,
-              left: 0,
-              bottom: 0,
-            }}
+            margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
           >
-
             <defs>
-
               <linearGradient
                 id="productionConfidenceFill"
                 x1="0"
@@ -815,44 +203,9 @@ function ProductionForecastMainChart({
                 x2="0"
                 y2="1"
               >
-
-                <stop
-                  offset="0%"
-                  stopColor="#ef4444"
-                  stopOpacity={0.25}
-                />
-
-                <stop
-                  offset="100%"
-                  stopColor="#ef4444"
-                  stopOpacity={0.02}
-                />
-
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
               </linearGradient>
-
-              <filter
-                id="productionForecastGlow"
-                x="-50%"
-                y="-50%"
-                width="200%"
-                height="200%"
-              >
-
-                <feGaussianBlur
-                  stdDeviation="3"
-                  result="blur"
-                />
-
-                <feMerge>
-
-                  <feMergeNode in="blur" />
-
-                  <feMergeNode in="SourceGraphic" />
-
-                </feMerge>
-
-              </filter>
-
             </defs>
 
             <CartesianGrid
@@ -864,37 +217,23 @@ function ProductionForecastMainChart({
             <XAxis
               dataKey="period"
               stroke="#71717a"
-              tick={{
-                fill: "#a1a1aa",
-                fontSize: 12,
-              }}
-              axisLine={{
-                stroke: "#27272a",
-              }}
+              tick={{ fill: "#a1a1aa", fontSize: 12 }}
+              axisLine={{ stroke: "#27272a" }}
               tickLine={false}
             />
 
             <YAxis
               stroke="#71717a"
-              tick={{
-                fill: "#a1a1aa",
-                fontSize: 12,
-              }}
+              tick={{ fill: "#a1a1aa", fontSize: 12 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={formatYAxis}
+              tickFormatter={(value) => Number(value).toFixed(1)}
               width={48}
             />
 
-            <Tooltip
-              content={<CustomTooltip />}
-            />
-
+            <Tooltip content={<CustomTooltip />} />
             <Legend
-              wrapperStyle={{
-                fontSize: 12,
-                color: "#a1a1aa",
-              }}
+              wrapperStyle={{ fontSize: 12, color: "#a1a1aa" }}
               iconType="circle"
             />
 
@@ -904,761 +243,251 @@ function ProductionForecastMainChart({
               name="Actual Production"
               stroke="#a1a1aa"
               strokeWidth={2.5}
-              dot={{
-                r: 4,
-                fill: "#a1a1aa",
-                strokeWidth: 0,
-              }}
+              dot={{ r: 4, fill: "#a1a1aa", strokeWidth: 0 }}
               connectNulls={false}
+            />
+
+            <Area
+              type="linear"
+              dataKey="confidenceHigh"
+              stroke="none"
+              fill="url(#productionConfidenceFill)"
+              fillOpacity={1}
+              baseValue="confidenceLow"
             />
 
             <Line
               type="linear"
-              dataKey="forecastBridge"
+              dataKey="forecastLine"
               name="Forecast"
               stroke="#ef4444"
               strokeWidth={3}
-              dot={{
-                r: 5,
-                fill: "#ef4444",
-                strokeWidth: 0,
-              }}
+              dot={{ r: 5, fill: "#ef4444", strokeWidth: 0 }}
               connectNulls={false}
             />
 
             <Line
               type="linear"
-              dataKey="targetBridge"
+              dataKey="targetLine"
               name="Target"
               stroke="#b85c5c"
               strokeWidth={2.5}
               strokeOpacity={0.65}
               strokeDasharray="6 4"
-              dot={{
-                r: 5,
-                fill: "#b85c5c",
-                strokeWidth: 0,
-              }}
+              dot={{ r: 5, fill: "#b85c5c", strokeWidth: 0 }}
               connectNulls={false}
             />
-
           </ComposedChart>
-
         </ResponsiveContainer>
-
       </div>
     </div>
   );
 }
 
-/* =========================================================
-   DATA ORIGIN SECTION
-========================================================= */
-
-function DataOriginSection() {
-  return (
-    <section className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border p-5 sm:p-6">
-
-      <div className="flex items-center gap-3 mb-5">
-
-        <div className="w-10 h-10 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-
-          <Database className="w-5 h-5 text-red-400" />
-
-        </div>
-
-        <div>
-
-          <h2 className="font-display font-semibold text-white text-lg">
-            Data Origin
-          </h2>
-
-          <p className="text-sm text-text-muted">
-            Sources used to generate production insights
-          </p>
-
-        </div>
-
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-        {dataOrigin.map((source) => (
-
-          <div
-            key={source}
-            className="flex items-center gap-3 bg-zenith-surface/60 border border-zenith-border rounded-lg px-4 py-3"
-          >
-
-            <span className="w-2 h-2 rounded-full bg-red-400" />
-
-            <span className="text-sm text-text-secondary">
-              {source}
-            </span>
-
-          </div>
-
-        ))}
-
-      </div>
-
-    </section>
-  );
-}
-
-/* =========================================================
-   STATE PRODUCTION RANKING
-========================================================= */
-
-function StateProductionRanking({
-  data,
-}) {
-  const rankedStates =
-    [...data].sort(
-      (a, b) =>
-        b.production -
-        a.production
-    );
-
-  const highestProduction =
-    rankedStates[0]?.production || 1;
-
-  return (
-    <section className="bg-zenith-elevated/80 backdrop-blur-xl rounded-xl border border-zenith-border p-5 sm:p-6">
-
-      <div className="flex items-center justify-between mb-6">
-
-        <div>
-
-          <h2 className="font-display font-semibold text-white text-lg">
-            Highest Production by State
-          </h2>
-
-          <p className="text-sm text-text-muted">
-            States ranked by total production output
-          </p>
-
-        </div>
-
-        <Trophy className="w-6 h-6 text-red-400" />
-
-      </div>
-
-      <div className="space-y-4">
-
-        {rankedStates.map(
-          (item, index) => {
-
-            const percentage =
-              (
-                item.production /
-                highestProduction
-              ) * 100;
-
-            return (
-
-              <div
-                key={item.state}
-                className="group"
-              >
-
-                <div className="flex items-center justify-between mb-2">
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="w-8 h-8 rounded-lg bg-zenith-surface border border-zenith-border flex items-center justify-center">
-
-                      {index < 3 ? (
-                        <Medal
-                          className={`w-4 h-4 ${
-                            index === 0
-                              ? "text-yellow-400"
-                              : index === 1
-                              ? "text-zinc-300"
-                              : "text-orange-400"
-                          }`}
-                        />
-                      ) : (
-                        <span className="text-sm font-mono text-text-muted">
-                          #{index + 1}
-                        </span>
-                      )}
-
-                    </div>
-
-                    <span className="text-sm sm:text-base font-medium text-white">
-                      {item.state}
-                    </span>
-
-                  </div>
-
-                  <div className="text-right">
-
-                    <span className="font-mono text-white tabular-nums">
-                      <CountUp
-                        end={item.production}
-                        duration={1.4}
-                      />
-                    </span>
-
-                    <span className="text-xs text-text-muted ml-1">
-                      t
-                    </span>
-
-                  </div>
-
-                </div>
-
-                <div className="h-2 w-full bg-zenith-surface rounded-full overflow-hidden">
-
-                  <div
-                    className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full transition-all duration-700"
-                    style={{
-                      width: `${percentage}%`,
-                    }}
-                  />
-
-                </div>
-
-              </div>
-            );
-          }
-        )}
-
-      </div>
-
-    </section>
-  );
-}
-
-/* =========================================================
-   MAIN PRODUCTION PAGE
-========================================================= */
-
 export default function Production() {
   const [backendData, setBackendData] = useState(null);
   const [backendError, setBackendError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
   const loadProductionForecast = async () => {
     try {
+      setLoading(true);
+      setBackendError(null);
       const data = await getProductionForecast();
-
       setBackendData(data);
-      console.log("Production backend:", data);
+      console.log("Production API:", data);
     } catch (error) {
-      console.error("Production backend error:", error);
-      setBackendError(error.message);
+      console.error("Production API error:", error);
+      setBackendError(error?.message || "Unable to load production data.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  loadProductionForecast();
-}, []);
+  useEffect(() => {
+    loadProductionForecast();
+  }, []);
 
-  const [filters, setFilters] =
-    useState({
-      state: "Select State",
-      district: "Select City",
-      mine: "Select Mine",
-      year: "2026",
-    });
+  const latestHistorical =
+    backendData?.historical?.length > 0
+      ? backendData.historical[backendData.historical.length - 1]
+      : null;
 
-  /* -------------------------------------------------------
-     UPDATE FILTERS
-  ------------------------------------------------------- */
+  const previousHistorical =
+    backendData?.historical?.length > 1
+      ? backendData.historical[backendData.historical.length - 2]
+      : null;
 
-  const updateFilters = (
-    partial
-  ) => {
-    setFilters(
-      (previous) => ({
-        ...previous,
-        ...partial,
-      })
-    );
-  };
+  const currentOutput = Number(latestHistorical?.production_lakh_tonnes) || 0;
+  const forecastOutput =
+    Number(backendData?.forecast_production_lakh_tonnes) || 0;
+  const targetOutput =
+    Number(backendData?.expected_production_lakh_tonnes) || 0;
+  const shortfallPct = Number(backendData?.predicted_shortfall_pct) || 0;
+  const shortfallProbability =
+    (Number(backendData?.shortfall_probability) || 0) * 100;
 
-  /* -------------------------------------------------------
-     FILTER SCALING
-  ------------------------------------------------------- */
+  const currentTrend =
+    previousHistorical?.production_lakh_tonnes
+      ? ((currentOutput - Number(previousHistorical.production_lakh_tonnes)) /
+          Number(previousHistorical.production_lakh_tonnes)) *
+        100
+      : 0;
 
-  const filterFactor =
-    useMemo(() => {
+  const scaledSeries = useMemo(() => {
+    if (!backendData?.historical?.length) return [];
 
-      const seed =
-        `${filters.state}-${filters.district}-${filters.mine}-${filters.year}`;
+    const historicalPoints = backendData.historical.map((item) => ({
+      period: new Date(`${item.month}-01`).toLocaleString("en-US", {
+        month: "short",
+      }),
+      historicalLine: Number(item.production_lakh_tonnes),
+      forecastLine: null,
+      targetLine: null,
+      confidenceLow: null,
+      confidenceHigh: null,
+    }));
 
-      let hash = 0;
-
-      for (
-        let i = 0;
-        i < seed.length;
-        i++
-      ) {
-        hash =
-          (
-            hash * 31 +
-            seed.charCodeAt(i)
-          ) >>> 0;
-      }
-
-      return (
-        0.9 +
-        (hash % 200) /
-          1000
-      );
-
-    }, [filters]);
-
-  /* -------------------------------------------------------
-     SCALE KPI VALUES
-  ------------------------------------------------------- */
-
-  const scaledKpis =
-    useMemo(() => {
-
-      const scale =
-        (number) =>
-          Math.round(
-            number *
-              filterFactor
-          );
-
-      return {
-
-        currentOutput: {
-          ...productionKpis.currentOutput,
-          value:
-            backendData?.historical?.length > 0
-              ? backendData.historical[
-                  backendData.historical.length - 1
-                ].production_lakh_tonnes
-              : 0,
-          unit: "Lakh Tonnes",
-          trend: 0,
-          trendLabel:
-            backendData?.historical?.length > 0
-              ? `Latest actual (${backendData.historical[
-                  backendData.historical.length - 1
-                ].month})`
-              : "",
-        },
-        
-        targetOutput: {
-          ...productionKpis.targetOutput,
-          value: backendData
-            ? backendData.expected_production_lakh_tonnes
-            : productionKpis.targetOutput.value,
-          unit: "Lakh Tonnes",
-        },
-
-        forecastOutput: {
-          ...productionKpis.forecastOutput,
-          value: backendData
-            ? backendData.forecast_production_lakh_tonnes
-            : productionKpis.forecastOutput.value,
-          unit: "Lakh Tonnes",
-        },
-
-        variance: {
-          ...productionKpis.variance,
-          label: "Predicted Shortfall",
-          value: backendData
-            ? backendData.predicted_shortfall_pct
-            : 0,
-          unit: "%",
-          status: backendData
-            ? backendData.classification === "YES"
-              ? "Shortfall Expected"
-              : "No Shortfall"
-            : null,
-          trend: 0,
-          trendLabel: "regression estimate",
-        },
-
-        confidence: {
-          ...productionKpis.confidence,
-          label: "Shortfall Probability",
-          value: backendData
-            ? backendData.shortfall_probability * 100
-            : 0,
-          unit: "%",
-          trend: 0,
-          trendLabel: "classifier probability",
-        },
-      };
-
-    }, [filterFactor, backendData]);
-
-  /* -------------------------------------------------------
-     SCALE CHART VALUES
-  ------------------------------------------------------- */
-
- const scaledSeries = useMemo(() => {
-  if (!backendData) {
-    return [];
-  }
-
-  const historicalPoints = backendData.historical.map((item) => ({
-    period: new Date(`${item.month}-01`).toLocaleString("en-US", {
-      month: "short",
-    }),
-
-    historical: item.production_lakh_tonnes,
-    historicalLine: item.production_lakh_tonnes,
-
-    forecastBridge: null,
-    targetBridge: null,
-  }));
-
-  // Connect BOTH forecast and target from latest actual month
-  if (historicalPoints.length > 0) {
     const lastIndex = historicalPoints.length - 1;
-    const lastActual = historicalPoints[lastIndex].historical;
+    const lastActual = historicalPoints[lastIndex]?.historicalLine;
 
-    historicalPoints[lastIndex].forecastBridge = lastActual;
-    historicalPoints[lastIndex].targetBridge = lastActual;
-  }
+    if (lastIndex >= 0) {
+      historicalPoints[lastIndex].forecastLine = lastActual;
+      historicalPoints[lastIndex].targetLine = lastActual;
+    }
 
-  const forecastMonth = new Date(
-    backendData.prediction_date
-  ).toLocaleString("en-US", {
-    month: "short",
-  });
-
-  return [
-    ...historicalPoints,
-    {
-      period: forecastMonth,
-
-      historical: null,
-      historicalLine: null,
-
-      forecastBridge:
-        backendData.forecast_production_lakh_tonnes,
-
-      targetBridge:
-        backendData.expected_production_lakh_tonnes,
-    },
-  ];
-}, [backendData]);
-
-  /* -------------------------------------------------------
-     SCALE STATE PRODUCTION
-  ------------------------------------------------------- */
-
-  const scaledStateProduction =
-    useMemo(() => {
-
-      return stateProductionData.map(
-        (item) => ({
-          ...item,
-
-          production:
-            Math.round(
-              item.production *
-                filterFactor
-            ),
+    const forecastMonth = backendData.prediction_date
+      ? new Date(backendData.prediction_date).toLocaleString("en-US", {
+          month: "short",
         })
-      );
+      : "Forecast";
 
-    }, [filterFactor]);
-
-  /* =======================================================
-     RENDER
-  ======================================================= */
+    return [
+      ...historicalPoints,
+      {
+        period: forecastMonth,
+        historicalLine: null,
+        forecastLine: Number(backendData.forecast_production_lakh_tonnes),
+        targetLine: Number(backendData.expected_production_lakh_tonnes),
+        confidenceLow: null,
+        confidenceHigh: null,
+      },
+    ];
+  }, [backendData]);
 
   return (
-
     <div className="relative min-h-screen bg-zenith-bg flex flex-col overflow-hidden">
-
-       <div className="fixed inset-0 z-0 pointer-events-none">
-                     <CursorGrid
-                       color="#ffffff"
-                       opacity={0.08}
-                     />
-                   </div>
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <CursorGrid color="#ffffff" opacity={0.08} />
+      </div>
 
       <div className="relative z-10 flex min-h-screen flex-col">
-
         <Navbar />
 
         <main className="flex-1 pt-24 pb-8 px-4 sm:px-6 lg:px-8">
-
           <div className="mx-auto max-w-7xl space-y-8">
-
-            {/* PAGE HEADER */}
-
             <section className="space-y-3 animate-slide-up">
-
               <h1 className="font-display font-semibold text-3xl sm:text-4xl text-white tracking-tight">
-
                 PRODUCTION INTELLIGENCE
-
               </h1>
-
               <p className="text-text-secondary text-lg max-w-2xl">
-
-                Track output against target
-                and review model-forecast
-                production by mine, city
-                and state.
-
+                Production history, model forecast, target output and
+                shortfall indicators returned directly by the backend.
               </p>
-
-              <p className="text-xs text-text-muted flex items-center gap-1.5">
-
-                <span className="px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-mono">
-
-                  Demo Data
-
-                </span>
-
-                <span>
-
-                  Based on sample forecast
-                  output — not a live model
-                  inference
-
-                </span>
-
+              <p className="text-xs text-text-muted">
+                Live backend data · no hardcoded production values
               </p>
-
             </section>
 
-            {/* FILTER BAR */}
+            {backendError && (
+              <section className="flex items-center justify-between gap-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <span>{backendError}</span>
+                </div>
+                <button
+                  onClick={loadProductionForecast}
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 px-3 py-2 hover:bg-red-500/10"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry
+                </button>
+              </section>
+            )}
 
-            <div
-              className="animate-slide-up"
-              style={{
-                animationDelay: "100ms",
-              }}
-            >
-
-              <ProductionFilterBar
-                filters={filters}
-                onChange={updateFilters}
-              />
-
-            </div>
-
-            {/* KPI STRIP */}
-
-            <section
-              aria-labelledby="production-kpis-heading"
-              className="animate-slide-up"
-              style={{
-                animationDelay: "150ms",
-              }}
-            >
-
-              <h2
-                id="production-kpis-heading"
-                className="sr-only"
-              >
-                Production KPIs
-              </h2>
-
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-      <BorderGlow
-  glowColor="#ffffff"
-  glowRadius={80}
-  glowIntensity={1.2}
-  borderRadius={24}
->
+            <section className="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-slide-up">
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
                 <ProductionKpiCard
-                  label={
-                    scaledKpis.currentOutput.label
-                  }
-                  value={
-                    scaledKpis.currentOutput.value
-                  }
-                  unit={
-                    scaledKpis.currentOutput.unit
-                  }
-                  trend={
-                    scaledKpis.currentOutput.trend
-                  }
-                  trendLabel={
-                    scaledKpis.currentOutput.trendLabel
-                  }
-                  accent="white"
+                  label="Current Output"
+                  value={currentOutput}
+                  unit="Lakh Tonnes"
+                  trend={currentTrend}
+                  trendLabel={latestHistorical ? `Latest actual (${latestHistorical.month})` : ""}
                 />
-                </BorderGlow>
+              </BorderGlow>
 
-                {/* CHANGED FROM PURPLE TO RED */}
-                <BorderGlow
-  glowColor="#ffffff"
-  glowRadius={80}
-  glowIntensity={1.2}
-  borderRadius={24}
->
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
                 <ProductionKpiCard
-                  label={
-                    scaledKpis.targetOutput.label
-                  }
-                  value={
-                    scaledKpis.targetOutput.value
-                  }
-                  unit={
-                    scaledKpis.targetOutput.unit
-                  }
-                  trend={
-                    scaledKpis.targetOutput.trend
-                  }
-                  trendLabel={
-                    scaledKpis.targetOutput.trendLabel
-                  }
+                  label="Target Output"
+                  value={targetOutput}
+                  unit="Lakh Tonnes"
+                  trend={0}
+                  trendLabel="Backend target"
                   accent="red"
-                /></BorderGlow>
- <BorderGlow
-  glowColor="#ffffff"
-  glowRadius={80}
-  glowIntensity={1.2}
-  borderRadius={24}
->
+                />
+              </BorderGlow>
+
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
                 <ProductionKpiCard
-                  label={
-                    scaledKpis.forecastOutput.label
-                  }
-                  value={
-                    scaledKpis.forecastOutput.value
-                  }
-                  unit={
-                    scaledKpis.forecastOutput.unit
-                  }
-                  trend={
-                    scaledKpis.forecastOutput.trend
-                  }
-                  trendLabel={
-                    scaledKpis.forecastOutput.trendLabel
-                  }
-                  accent="purple"
-                /></BorderGlow>
- <BorderGlow
-  glowColor="#ffffff"
-  glowRadius={80}
-  glowIntensity={1.2}
-  borderRadius={24}
->
+                  label="Forecast Output"
+                  value={forecastOutput}
+                  unit="Lakh Tonnes"
+                  trend={0}
+                  trendLabel="Model forecast"
+                  accent="red"
+                />
+              </BorderGlow>
+
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
                 <ProductionKpiCard
-                  label={
-                    scaledKpis.variance.label
-                  }
-                  value={
-                    scaledKpis.variance.value
-                  }
-                  unit={
-                    scaledKpis.variance.unit
-                  }
-                  status={
-                    scaledKpis.variance.status
-                  }
-                  trend={
-                    scaledKpis.variance.trend
-                  }
-                  trendLabel={
-                    scaledKpis.variance.trendLabel
-                  }
+                  label="Predicted Shortfall"
+                  value={shortfallPct}
+                  unit="%"
+                  trend={0}
+                  status={backendData?.classification === "YES" ? "Shortfall Expected" : "No Shortfall"}
+                  trendLabel="Backend estimate"
                   accent="orange"
-                /></BorderGlow>
- <BorderGlow
-  glowColor="#ffffff"
-  glowRadius={80}
-  glowIntensity={1.2}
-  borderRadius={24}
->
+                />
+              </BorderGlow>
+
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
                 <ProductionKpiCard
-                  label={
-                    scaledKpis.confidence.label
-                  }
-                  value={
-                    scaledKpis.confidence.value
-                  }
-                  unit={
-                    scaledKpis.confidence.unit
-                  }
-                  trend={
-                    scaledKpis.confidence.trend
-                  }
-                  trendLabel={
-                    scaledKpis.confidence.trendLabel
-                  }
+                  label="Shortfall Probability"
+                  value={shortfallProbability}
+                  unit="%"
+                  trend={0}
+                  trendLabel="Classifier probability"
                   accent="green"
-                /></BorderGlow>
-
-              </div>
-
-            </section>
-
-            {/* MAIN CHART */}
-
-            <section
-              className="animate-slide-up"
-              style={{
-                animationDelay: "200ms",
-              }}
-            >
-              <BorderGlow
-                               glowColor="#ffffff"
-                               glowRadius={80}
-                               glowIntensity={1.2}
-                               borderRadius={24}
-                             >   
-              <ProductionForecastMainChart
-                data={scaledSeries}
-              />
+                />
               </BorderGlow>
-
             </section>
 
-            {/* STATE PRODUCTION RANKING */}
-
-            <section
-              className="animate-slide-up"
-              style={{
-                animationDelay: "250ms",
-              }}
-            >
-                 <BorderGlow
-                                  glowColor="#ffffff"
-                                  glowRadius={80}
-                                  glowIntensity={1.2}
-                                  borderRadius={24}
-                                >   
-              <StateProductionRanking
-                data={scaledStateProduction}
-              /></BorderGlow>
-
-            </section>
-
-            {/* DATA ORIGIN */}
-
-            <section
-              className="animate-slide-up"
-              style={{
-                animationDelay: "300ms",
-              }}
-            >
-                 <BorderGlow
-                                  glowColor="#ffffff"
-                                  glowRadius={80}
-                                  glowIntensity={1.2}
-                                  borderRadius={24}
-                                >   
-              <DataOriginSection />
+            <section className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+              <BorderGlow glowColor="#ffffff" glowRadius={80} glowIntensity={1.2} borderRadius={24}>
+                {loading ? (
+                  <div className="h-[430px] flex items-center justify-center bg-zenith-elevated/80 rounded-xl text-text-muted">
+                    Loading production data from backend…
+                  </div>
+                ) : (
+                  <ProductionForecastMainChart data={scaledSeries} />
+                )}
               </BorderGlow>
-
             </section>
-
           </div>
-
         </main>
 
         <Footer />
-
       </div>
-
     </div>
   );
 }

@@ -4,7 +4,7 @@ class Settings(BaseSettings):
     # Frontend URLs allowed to call FastAPI
     cors_origins: str = (
         "http://localhost:5173,"
-        "http://localhost:5174"
+        "http://localhost:5176"
     )
     model_config = SettingsConfigDict(
         env_file=".env",
