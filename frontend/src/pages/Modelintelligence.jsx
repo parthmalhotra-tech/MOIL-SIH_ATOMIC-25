@@ -51,7 +51,7 @@ const modelPerformance = {
     description:
       "Manganese prospectivity classification",
     rmse: null,
-    inferenceSpeed: null,
+    inferenceSpeed: 0.59,
   },
 };
 
@@ -433,7 +433,7 @@ export default function ModelIntelligence() {
       setApiStatus("Checking...");
 
       const response = await fetch(
-        fetch(`${import.meta.env.VITE_API_URL}/health`),
+        `${import.meta.env.VITE_API_URL}/health`,
         {
           method: "GET",
           cache: "no-store",
