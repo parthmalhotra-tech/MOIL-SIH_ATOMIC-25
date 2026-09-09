@@ -3,8 +3,8 @@ class Settings(BaseSettings):
     app_name: str = "MOIL Backend"
     # Frontend URLs allowed to call FastAPI
     cors_origins: str = (
-        "http://localhost:5173,"
-        "http://localhost:5176"
+        "https://mnvisionai.vercel.app"
+       
     )
 
     gemini_api_key: str | None = None
