@@ -546,11 +546,7 @@ export default function AIRecommendations() {
                 </div>
               </BorderGlow>
 
-              <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] p-5">
-                <div className="flex items-start gap-3">
-                  <ShieldAlert className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
-                </div>
-              </div>
+             
             </aside>
           </section>
         </div>
