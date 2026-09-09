@@ -2,13 +2,13 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import Settings
+from app.config import settings
 from app.routes import production, ai
 from app.core.exceptions import ModelInferenceError
 
 
 app = FastAPI(
-    title=Settings.app_name
+    title=settings.app_name
 )
 
 
@@ -17,7 +17,7 @@ app = FastAPI(
 # ---------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=Settings.cors_origin_list,
+    allow_origins=settings.cors_origin_list,
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
