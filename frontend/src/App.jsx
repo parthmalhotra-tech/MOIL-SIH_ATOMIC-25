@@ -4,7 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Prospectivity from "./pages/Prospectivity";
 import Production from "./pages/production";
 
-import ModelIntelligence from "./pages/ModelIntelligence";
+import ModelIntelligence from "./pages/Modelintelligence";
 import AIRecommendations from "./pages/AiRecommendation";
 
 function App() {
