@@ -433,7 +433,7 @@ export default function ModelIntelligence() {
       setApiStatus("Checking...");
 
       const response = await fetch(
-        `${API_BASE_URL}/health`,
+        fetch(`${import.meta.env.VITE_API_URL}/health`),
         {
           method: "GET",
           cache: "no-store",
