@@ -10,7 +10,7 @@ export default function Navbar() {
     { label: "Prospectivity", href: "/prospectivity" },
     { label: "Production", href: "/production" },
     { label: "Model Intelligence", href: "/Modelintelligence" },
-    { label: "Ai-recommendations", href: "/Ai-recommendations" },
+    { label: "Ai-Recommendations", href: "/Ai-recommendations" },
   ];
 
   const currentIndex = navItems.findIndex(
