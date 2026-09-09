@@ -8,7 +8,7 @@ from app.core.exceptions import ModelInferenceError
 
 
 app = FastAPI(
-    title=settings.app_name
+    title=Settings.app_name
 )
 
 
