@@ -14,7 +14,7 @@ import CursorGrid from "../components/CursorGrid";
 import { prospectivityMockData } from "../data/prospectivitydata";
 import { getProductionForecast } from "../services/productionService";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const LAKH_TONNES_TO_MT = 0.1;
 
 function toMt(value) {
