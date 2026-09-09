@@ -1,8 +1,12 @@
-from fastapi import (APIRouter, HTTPException,)
+from fastapi import APIRouter, HTTPException
 
-from app.schemas.ai import (ChatRequest,ChatResponse,RecommendationResponse,)
+from app.schemas.ai import (
+    ChatRequest,
+    ChatResponse,
+    RecommendationResponse,
+)
 
-from app.services.ai_context import (get_current_ai_context,)
+from app.services.ai_context import get_current_ai_context
 
 from app.services.gemini_service import (
     answer_chat,
@@ -11,7 +15,10 @@ from app.services.gemini_service import (
 )
 
 
-router = APIRouter(prefix="/ai",tags=["AI"],)
+router = APIRouter(
+    prefix="/ai",
+    tags=["AI"],
+)
 
 
 @router.get(
@@ -26,21 +33,15 @@ def get_ai_recommendations():
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=(
-                "Unable to generate the current "
-                "production model context."
-            ),
+            detail="Unable to generate the current production model context.",
         ) from exc
 
     try:
         return generate_recommendations(context)
 
     except Exception:
-        # Dashboard remains operational even if
-        # Gemini is unavailable.
-        return generate_fallback_recommendations(
-            context
-        )
+        # Keep recommendations available even when Gemini fails.
+        return generate_fallback_recommendations(context)
 
 
 @router.post(
@@ -50,9 +51,13 @@ def get_ai_recommendations():
 def chat_with_ai(
     request: ChatRequest,
 ):
-
     try:
-        context = get_current_ai_context()
+        # Dashboard already sends the current context.
+        # Only calculate it here when context wasn't supplied.
+        context = request.context
+
+        if not context:
+            context = get_current_ai_context()
 
         answer = answer_chat(
             message=request.message,
@@ -65,13 +70,17 @@ def chat_with_ai(
         )
 
     except RuntimeError as exc:
+        print("Gemini runtime error:", repr(exc))
+
         raise HTTPException(
             status_code=503,
-            detail="AI assistant is temporarily unavailable.",
+            detail=str(exc),
         ) from exc
 
     except Exception as exc:
+        print("AI chat error:", repr(exc))
+
         raise HTTPException(
             status_code=500,
-            detail="AI assistant request failed.",
+            detail=str(exc),
         ) from exc
