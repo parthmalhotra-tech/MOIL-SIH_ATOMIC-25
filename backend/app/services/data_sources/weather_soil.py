@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ============================================================
 # MOIL MINE LOCATIONS
-# MVP coordinates - keep/update these with your final GIS values
 # ============================================================
 
 MINE_LOCATIONS = [
@@ -34,15 +33,15 @@ NASA_POWER_URL = (
 )
 
 
+# ============================================================
+# FETCH WEATHER FOR ONE MINE
+# ============================================================
+
 def _fetch_one_location(
     mine: dict,
     start_date,
     end_date
 ) -> pd.DataFrame:
-    """
-    Fetch daily precipitation and top-layer soil wetness
-    from NASA POWER for one mine.
-    """
 
     params = {
         "parameters": "PRECTOTCORR,GWETTOP",
@@ -86,10 +85,12 @@ def _fetch_one_location(
             dates,
             format="%Y%m%d"
         ),
+
         "precipitation_mm_day": [
             precipitation[d]
             for d in dates
         ],
+
         "surface_soil_wetness_frac": [
             soil_wetness[d]
             for d in dates
@@ -125,15 +126,15 @@ def _fetch_one_location(
     return df
 
 
+# ============================================================
+# BUILD ONE CHECKPOINT ROW
+# ============================================================
+
 def _build_checkpoint_row(
     mine_df: pd.DataFrame,
     mine_name: str,
     prediction_date
 ) -> dict:
-    """
-    Convert one mine's daily NASA data into the rolling
-    weather variables required by the MOIL-wide ML model.
-    """
 
     prediction_date = pd.Timestamp(
         prediction_date
@@ -148,15 +149,26 @@ def _build_checkpoint_row(
     )
 
     if len(mine_df) < 30:
+        first_date = (
+            mine_df["date"].min().date()
+            if not mine_df.empty
+            else "N/A"
+        )
+
+        last_date = (
+            mine_df["date"].max().date()
+            if not mine_df.empty
+            else "N/A"
+        )
+
         raise ValueError(
             f"{mine_name}: only {len(mine_df)} valid daily "
             f"weather observations available from "
-            f"{mine_df['date'].min().date() if not mine_df.empty else 'N/A'} "
-            f"to {prediction_date.date()}. "
+            f"{first_date} to {last_date}. "
             f"At least 30 are required."
         )
 
-    # Last available row on/before prediction date
+    # Last available row
     latest = mine_df.iloc[-1]
 
     # --------------------------------------------------------
@@ -188,9 +200,9 @@ def _build_checkpoint_row(
         "prediction_day_of_month":
             prediction_date.day,
 
-        # --------------------------------------------
-        # Rainfall variables expected by ML package
-        # --------------------------------------------
+        # ----------------------------------------------------
+        # Rainfall variables
+        # ----------------------------------------------------
 
         "today_precipitation_mm_day":
             float(
@@ -227,9 +239,9 @@ def _build_checkpoint_row(
                 ].sum()
             ),
 
-        # --------------------------------------------
-        # Soil variables expected by ML package
-        # --------------------------------------------
+        # ----------------------------------------------------
+        # Soil variables
+        # ----------------------------------------------------
 
         "w1d_mean_surface_soil_wetness_frac":
             float(
@@ -258,43 +270,47 @@ def _build_checkpoint_row(
     }
 
 
+# ============================================================
+# GET WEATHER CHECKPOINT
+# ============================================================
+
 def get_mine_weather_checkpoint(
     prediction_date,
-    lookback_days: int = 60
+    lookback_days: int = 90
 ) -> pd.DataFrame:
-    """
-    Fetch weather for all 10 mines and return ONE ROW PER MINE.
-
-    IMPORTANT:
-    This function does NOT average raw rainfall or soil values.
-
-    Each mine keeps its own rolling environmental features.
-    The ML feature-engineering layer will later:
-        1. calculate mine-level rainfall stress
-        2. calculate mine-level soil stress
-        3. aggregate the 10 mine stress values using
-           production_share = 0.10 each
-
-    A 60-day lookback is used so that missing NASA POWER
-    observations do not prevent the model from obtaining
-    the required 30 valid daily observations.
-    """
 
     prediction_date = pd.Timestamp(
         prediction_date
     ).normalize()
 
-    # Fetch 60 days instead of 40 to provide enough
-    # valid observations after missing-data filtering.
+    # --------------------------------------------------------
+    # IMPORTANT:
+    # Always request at least 90 calendar days.
+    #
+    # This protects the pipeline even if another caller
+    # accidentally passes 40 or 60.
+    # --------------------------------------------------------
+
+    lookback_days = max(
+        int(lookback_days),
+        90
+    )
+
     start_date = (
         prediction_date
         - timedelta(days=lookback_days - 1)
     )
 
+    print(
+        f"Fetching NASA weather from "
+        f"{start_date.date()} to "
+        f"{prediction_date.date()} "
+        f"({lookback_days} days)"
+    )
+
     mine_frames = {}
 
-    # Fetch mines concurrently so 10 NASA requests do not
-    # unnecessarily block one after another.
+    # Fetch all mines concurrently
     with ThreadPoolExecutor(
         max_workers=5
     ) as executor:
@@ -325,6 +341,10 @@ def get_mine_weather_checkpoint(
                     f"{mine['name']}: {exc}"
                 ) from exc
 
+    # --------------------------------------------------------
+    # Build one row per mine
+    # --------------------------------------------------------
+
     checkpoint_rows = []
 
     for mine in MINE_LOCATIONS:
@@ -349,7 +369,11 @@ def get_mine_weather_checkpoint(
         checkpoint_rows
     )
 
-    # Safety check: 10 × 0.10 = 1.0
+    # --------------------------------------------------------
+    # Safety check:
+    # 10 mines × 0.10 = 1.0
+    # --------------------------------------------------------
+
     total_share = (
         checkpoint_df[
             "production_share"
