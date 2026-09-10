@@ -699,7 +699,7 @@ export default function ModelIntelligence() {
                   >
 
                     <ModelKpiCard
-                      label="ROC-AUC"
+                      label="RMSE"
                       value={
                         modelPerformance.production.rmse
                       }
@@ -754,7 +754,7 @@ export default function ModelIntelligence() {
                   >
 
                     <ModelKpiCard
-                      label="RMSE"
+                      label="ROC-AUC"
                       value={
                         modelPerformance.prospectivity.rmse
                       }
