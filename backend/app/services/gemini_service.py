@@ -143,8 +143,6 @@ practical management recommendations.
 
 STRICT RULES:
 
-RULES:
-
 - Answer using ONLY the supplied CURRENT VERIFIED MODEL CONTEXT.
 - Never invent data, thresholds, classifications, or model rules.
 - Never infer a risk threshold unless that threshold is explicitly
@@ -172,31 +170,47 @@ MODEL_CONTEXT:
 {context_json}
 """
 
-    response = client.models.generate_content(
-        model=settings.gemini_model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.2,
-            response_mime_type="application/json",
-            response_schema=RecommendationResponse,
-        ),
-    )
-
-    if response.parsed is not None:
-        result = response.parsed
-        result.source = "gemini"
-        return result
-
-    if response.text:
-        result = RecommendationResponse.model_validate_json(
-            response.text
+    try:
+        print("=== GEMINI RECOMMENDATIONS DEBUG ===")
+        print("Model:", settings.gemini_model)
+        print(
+            "API key configured:",
+            bool(settings.gemini_api_key),
         )
-        result.source = "gemini"
-        return result
 
-    raise RuntimeError(
-        "Gemini returned an empty recommendation response."
-    )
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+                response_mime_type="application/json",
+                response_schema=RecommendationResponse,
+            ),
+        )
+
+        print("Gemini recommendation response received")
+
+        if response.parsed is not None:
+            result = response.parsed
+            result.source = "gemini"
+            return result
+
+        if response.text:
+            result = RecommendationResponse.model_validate_json(
+                response.text
+            )
+            result.source = "gemini"
+            return result
+
+        raise RuntimeError(
+            "Gemini returned an empty recommendation response."
+        )
+
+    except Exception as exc:
+        print("=== GEMINI RECOMMENDATION ERROR ===")
+        print("Type:", type(exc).__name__)
+        print("Error:", repr(exc))
+        raise
 
 
 def answer_chat(
@@ -204,15 +218,16 @@ def answer_chat(
     context: dict,
 ) -> str:
 
-    client = get_gemini_client()
+    try:
+        client = get_gemini_client()
 
-    context_json = json.dumps(
-        context,
-        indent=2,
-        default=str,
-    )
+        context_json = json.dumps(
+            context,
+            indent=2,
+            default=str,
+        )
 
-    prompt = f"""
+        prompt = f"""
 You are the MOIL AI Decision Support Assistant.
 
 You assist management with questions about:
@@ -260,17 +275,41 @@ RULES:
 - Keep answers concise and management-oriented.
 """
 
-    response = client.models.generate_content(
-        model=settings.gemini_model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.2,
-        ),
-    )
-
-    if not response.text:
-        raise RuntimeError(
-            "Gemini returned an empty chat response."
+        print("=== GEMINI CHAT DEBUG ===")
+        print("Model:", settings.gemini_model)
+        print(
+            "API key configured:",
+            bool(settings.gemini_api_key),
+        )
+        print("Message:", message)
+        print(
+            "Context available:",
+            bool(context),
         )
 
-    return response.text.strip()
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+            ),
+        )
+
+        print("Gemini response received")
+        print(
+            "Response text available:",
+            bool(response.text),
+        )
+
+        if not response.text:
+            raise RuntimeError(
+                "Gemini returned an empty chat response."
+            )
+
+        return response.text.strip()
+
+    except Exception as exc:
+        print("=== GEMINI CHAT ERROR ===")
+        print("Type:", type(exc).__name__)
+        print("Error:", repr(exc))
+        raise
