@@ -1,0 +1,51 @@
+{
+  "model": "RandomForestRegressor",
+  "configuration": {
+    "n_estimators": 100,
+    "max_depth": null,
+    "min_samples_leaf": 1,
+    "max_features": 1.0,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "target": "target_shortfall_proxy_pct",
+  "features": [
+    "production_lag_1m_lakh_tonnes",
+    "production_lag_2m_lakh_tonnes",
+    "production_lag_3m_lakh_tonnes",
+    "expected_production_lakh_tonnes",
+    "month_progress_pct",
+    "moil_weighted_rainfall_stress_index",
+    "moil_weighted_soil_moisture_stress_index"
+  ],
+  "training_months": [
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04"
+  ],
+  "holdout_months": [
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12"
+  ],
+  "holdout_metrics": {
+    "MAE": 1.8109628677415421,
+    "RMSE": 2.0313298770719905,
+    "R2": 0.8321384681808462
+  }
+}
