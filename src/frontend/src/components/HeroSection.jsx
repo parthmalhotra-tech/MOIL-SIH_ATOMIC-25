@@ -45,7 +45,7 @@ export default function HeroSection() {
       const probability = Number(
         record.probability ??
           record.prospectivity_score ??
-          record.manganese_probability
+          record.manganese_probability,
       );
 
       return Number.isFinite(probability) && probability >= 0.7;
@@ -61,19 +61,15 @@ export default function HeroSection() {
     : null;
 
   const predictionPeriod = production?.prediction_date
-    ? new Date(production.prediction_date).toLocaleDateString(
-        "en-IN",
-        {
-          month: "long",
-          year: "numeric",
-        }
-      )
+    ? new Date(production.prediction_date).toLocaleDateString("en-IN", {
+        month: "long",
+        year: "numeric",
+      })
     : "Loading...";
 
   return (
     <section className="relative min-h-[90vh] flex items-center pt-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="mx-auto max-w-7xl w-full">
-
         {/* Background image/visual - right side */}
         <div className="absolute inset-0 -z-10 opacity-30" aria-hidden="true">
           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[60%] h-[80%] max-w-[800px] rounded-2xl bg-[url('https://images.unsplash.com/photo-1511593358241-7eea1f3c8c6d?w=800&q=80')] bg-cover bg-center" />
@@ -86,10 +82,8 @@ export default function HeroSection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
-
           {/* Left: Text content */}
           <div className="animate-slide-up pr-8">
-
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.05] tracking-tight text-white text-balance mb-8">
               <span className="block">Discover manganese</span>
               <span className="block">intelligence</span>
@@ -113,13 +107,15 @@ export default function HeroSection() {
                 <ArrowRight className="w-5 h-5" aria-hidden="true" />
               </a>
 
-              <button
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-zenith-border text-white font-semibold text-base uppercase tracking-wider transition-all duration-200 hover:border-zenith-accent hover:text-zenith-accent hover:bg-zenith-accent/10"
+              <a
                 href="https://drive.google.com/file/d/1XKI97vILhN0H1dSLQsx52TQUGCgJS5Bx/view?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-zenith-border text-white font-semibold text-base uppercase tracking-wider transition-all duration-200 hover:border-zenith-accent hover:text-zenith-accent hover:bg-zenith-accent/10"
               >
                 <Play className="w-5 h-5" aria-hidden="true" />
                 See How It Works
-              </button>
+              </a>
             </div>
           </div>
 
@@ -138,9 +134,7 @@ export default function HeroSection() {
                 borderRadius={24}
               >
                 <div className="relative h-full w-full flex flex-col items-center justify-between p-8 lg:p-10">
-
                   <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-md">
-
                     {/* Icon */}
                     <div className="mx-auto mb-6 w-20 h-20 rounded-xl bg-zenith-elevated flex items-center justify-center border border-zenith-border shrink-0">
                       <svg
@@ -166,14 +160,13 @@ export default function HeroSection() {
 
                     {/* Description */}
                     <p className="text-text-secondary mb-6 leading-relaxed text-base lg:text-lg max-w-md">
-                      AI predictions across India's manganese belts. Explore
-                      the interactive map with detailed location-level
-                      prospectivity insights.
+                      AI predictions across India's manganese belts. Explore the
+                      interactive map with detailed location-level prospectivity
+                      insights.
                     </p>
 
                     {/* REAL KPI Row */}
                     <div className="w-full max-w-md flex flex-col sm:flex-row gap-4 mb-6 shrink-0">
-
                       {/* Forecast Production */}
                       <div className="flex-1 bg-zenith-elevated/80 backdrop-blur-xl p-4 lg:p-5 rounded-xl border border-zenith-border text-center min-w-0">
                         <p className="font-display font-bold text-white text-xl lg:text-2xl leading-tight">
@@ -201,7 +194,6 @@ export default function HeroSection() {
                           ZONES
                         </p>
                       </div>
-
                     </div>
 
                     {/* Model status */}
@@ -230,13 +222,11 @@ export default function HeroSection() {
                         </span>
                       ))}
                     </div>
-
                   </div>
                 </div>
               </BorderGlow>
             </div>
           </div>
-
         </div>
       </div>
     </section>
