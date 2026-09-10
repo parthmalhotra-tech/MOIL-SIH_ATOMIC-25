@@ -115,6 +115,7 @@ export default function HeroSection() {
 
               <button
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-zenith-border text-white font-semibold text-base uppercase tracking-wider transition-all duration-200 hover:border-zenith-accent hover:text-zenith-accent hover:bg-zenith-accent/10"
+                href="https://drive.google.com/file/d/1XKI97vILhN0H1dSLQsx52TQUGCgJS5Bx/view?usp=sharing"
               >
                 <Play className="w-5 h-5" aria-hidden="true" />
                 See How It Works
