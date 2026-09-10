@@ -50,7 +50,7 @@ const modelPerformance = {
     name: "Prospectivity Model",
     description:
       "Manganese prospectivity classification",
-    rmse: null,
+    rmse: 86.35,
     inferenceSpeed: 0.59,
   },
 };
@@ -699,7 +699,7 @@ export default function ModelIntelligence() {
                   >
 
                     <ModelKpiCard
-                      label="RMSE"
+                      label="ROC-AUC"
                       value={
                         modelPerformance.production.rmse
                       }
