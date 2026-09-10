@@ -150,7 +150,9 @@ def _build_checkpoint_row(
     if len(mine_df) < 30:
         raise ValueError(
             f"{mine_name}: only {len(mine_df)} valid daily "
-            f"weather observations available. "
+            f"weather observations available from "
+            f"{mine_df['date'].min().date() if not mine_df.empty else 'N/A'} "
+            f"to {prediction_date.date()}. "
             f"At least 30 are required."
         )
 
@@ -258,7 +260,7 @@ def _build_checkpoint_row(
 
 def get_mine_weather_checkpoint(
     prediction_date,
-    lookback_days: int = 40
+    lookback_days: int = 60
 ) -> pd.DataFrame:
     """
     Fetch weather for all 10 mines and return ONE ROW PER MINE.
@@ -272,12 +274,18 @@ def get_mine_weather_checkpoint(
         2. calculate mine-level soil stress
         3. aggregate the 10 mine stress values using
            production_share = 0.10 each
+
+    A 60-day lookback is used so that missing NASA POWER
+    observations do not prevent the model from obtaining
+    the required 30 valid daily observations.
     """
 
     prediction_date = pd.Timestamp(
         prediction_date
     ).normalize()
 
+    # Fetch 60 days instead of 40 to provide enough
+    # valid observations after missing-data filtering.
     start_date = (
         prediction_date
         - timedelta(days=lookback_days - 1)
