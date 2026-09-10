@@ -1,4 +1,5 @@
 import json
+import time
 from functools import lru_cache
 
 from google import genai
@@ -218,16 +219,15 @@ def answer_chat(
     context: dict,
 ) -> str:
 
-    try:
-        client = get_gemini_client()
+    client = get_gemini_client()
 
-        context_json = json.dumps(
-            context,
-            indent=2,
-            default=str,
-        )
+    context_json = json.dumps(
+        context,
+        indent=2,
+        default=str,
+    )
 
-        prompt = f"""
+    prompt = f"""
 You are the MOIL AI Decision Support Assistant.
 
 You assist management with questions about:
@@ -275,41 +275,83 @@ RULES:
 - Keep answers concise and management-oriented.
 """
 
-        print("=== GEMINI CHAT DEBUG ===")
-        print("Model:", settings.gemini_model)
-        print(
-            "API key configured:",
-            bool(settings.gemini_api_key),
-        )
-        print("Message:", message)
-        print(
-            "Context available:",
-            bool(context),
-        )
+    print("=== GEMINI CHAT REQUEST ===")
+    print("Model:", settings.gemini_model)
+    print(
+        "API key configured:",
+        bool(settings.gemini_api_key),
+    )
+    print("Question:", message)
+    print("Context available:", bool(context))
 
-        response = client.models.generate_content(
-            model=settings.gemini_model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.2,
-            ),
-        )
+    last_error = None
 
-        print("Gemini response received")
-        print(
-            "Response text available:",
-            bool(response.text),
-        )
+    # Retry Gemini up to 3 times for temporary server errors.
+    for attempt in range(1, 4):
 
-        if not response.text:
+        try:
+            print(
+                f"Gemini chat attempt {attempt}/3..."
+            )
+
+            response = client.models.generate_content(
+                model=settings.gemini_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                ),
+            )
+
+            print(
+                f"Gemini chat attempt {attempt} succeeded."
+            )
+
+            if response.text:
+                return response.text.strip()
+
             raise RuntimeError(
                 "Gemini returned an empty chat response."
             )
 
-        return response.text.strip()
+        except Exception as exc:
 
-    except Exception as exc:
-        print("=== GEMINI CHAT ERROR ===")
-        print("Type:", type(exc).__name__)
-        print("Error:", repr(exc))
-        raise
+            last_error = exc
+
+            print(
+                f"Gemini chat attempt {attempt} failed."
+            )
+            print(
+                "Type:",
+                type(exc).__name__,
+            )
+            print(
+                "Error:",
+                repr(exc),
+            )
+
+            if attempt < 3:
+                wait_seconds = attempt * 2
+
+                print(
+                    f"Retrying Gemini in "
+                    f"{wait_seconds} seconds..."
+                )
+
+                time.sleep(wait_seconds)
+
+    print(
+        "=== GEMINI CHAT FAILED AFTER 3 ATTEMPTS ==="
+    )
+    print(
+        "Final error:",
+        repr(last_error),
+    )
+
+    # Return a normal response instead of allowing
+    # the FastAPI endpoint to return HTTP 500.
+    return (
+        "I'm temporarily unable to connect to the Gemini AI "
+        "service. The current production model data is still "
+        "available in the dashboard. Please try your question "
+        "again in a few seconds."
+    )
