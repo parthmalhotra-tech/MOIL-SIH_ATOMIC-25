@@ -1,6 +1,8 @@
 # MnVisionAI – AI-Powered Manganese Mining Intelligence Platform
 
 > **An integrated AI/ML and space-technology platform for manganese prospectivity analysis, production forecasting, shortfall-risk prediction, geospatial intelligence, and AI-assisted decision support for MOIL.**
+
+**Deployment Link:** [Visit MnVisionAI](https://mnvisionai.vercel.app/)
 ---
 
 ## 1. Project Information
@@ -142,7 +144,7 @@ If Gemini is temporarily unavailable, the system contains deterministic fallback
 | **Backend** | Python, FastAPI, Pydantic, Uvicorn|
 | **Machine Learning** | Scikit-learn, Random Forest Classifier, Random Forest Regressor, HistGradientBoosting, LightGBM, XGBoost, Pandas, NumPy, Joblib, Pickle|
 | **Generative AI** | Google Gemini API |
-| **Geospatial & Remote Sensing** | Sentinel-2 Imagery, SRTM DEM, NDVI, BSI, Geospatial Data Processing |
+| **Geospatial & Remote Sensing** | Sentinel-2 Imagery, SRTM DEM, NDVI, NDWI BSI, Geospatial Data Processing |
 | **Feature Engineering** | Lag Features, Rolling Statistics, Month/Trend Features, Rainfall Stress Index, Soil-Moisture Stress Index, Expected Production, Production Trend Estimation |
 | **Data Sources** | Historical Production Data, Rainfall & Weather Data, Sentinel-2 Data, NASA POWER |
 | **Cloud/Deployment** | Vercel, Render |
@@ -388,22 +390,344 @@ The recommendation engine includes:
 - and safeguards against inventing unavailable mine-specific or equipment-specific information.
 
 ---
-
-### AI Recommendations
-
-Gemini is used as an interpretation and recommendation layer.
-
-The architecture deliberately separates:
+## 6. Architecture
 
 ```text
-ML Models → Quantitative Prediction
-Gemini    → Interpretation / Recommendation
+                         MnVisionAI
+                             |
+             +---------------+---------------+
+             |                               |
+             v                               v
+  Prospectivity Intelligence       Production Intelligence
+             |                               |
+   Sentinel-2 + Terrain          Production + NASA POWER
+             |                               |
+             v                               v
+     Feature Engineering              Feature Engineering
+             |                               |
+             v                      +--------+--------+
+   Prospectivity Model              |                 |
+             |                       v                 v
+             v                  Classifier         Regressor
+   Prospectivity Map                 |                 |
+                                     v                 v
+                              Shortfall Risk     Production Forecast
+                                     |                 |
+                                     +--------+--------+
+                                              |
+                                              v
+                                       FastAPI Backend
+                                              |
+                                              v
+                                      Gemini Recommendation
+                                              |
+                                              v
+                                        React Frontend
 ```
-This prevents the generative model from replacing the underlying predictive models.
+## 7. Repository Structure
+
+```text
+MOIL-SIH_ATOMIC-25/
+├── assets/
+│   └── screenshots/
+│
+├── docs/
+│   ├── .gitkeep
+│   └── architecture.md
+│
+├── src/
+│   ├── backend/
+│   ├── database/
+│   ├── frontend/
+│   └── ml_models/
+│
+├── submission/
+│   ├── Atomic25_SIH2026_Presentation
+│   ├── DEMO.md
+│   └── PRESENTATION.md
+│
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
+## 8. Installation
+
+### Prerequisites
+
+Before running the project locally, install:
+- Git
+- Python
+- Node.js
+- npm
+A Gemini API key is required for live Gemini-powered AI functionality.
 
 ---
 
-## 6. Future Scope
+### 8.1 Clone the Repository
+
+```bash
+git clone https://github.com/parthmalhotra-tech/MOIL-SIH_ATOMIC-25.git
+cd MOIL-SIH_ATOMIC-25
+```
+---
+
+### 8.2 Backend Setup
+
+Navigate to the backend:
+```bash
+cd src/backend
+```
+Create a virtual environment:
+```bash
+python -m venv .venv
+```
+#### Windows PowerShell
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+#### macOS / Linux
+```bash
+source .venv/bin/activate
+```
+Install backend dependencies:
+```bash
+pip install -r requirements.txt
+```
+---
+
+### 8.3 Configure Gemini API
+
+Create:
+```text
+src/backend/.env
+```
+Add:
+```env
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=YOUR_SUPPORTED_GEMINI_MODEL_ID
+```
+
+For example, if your Gemini API project supports the model used by the deployed application:
+
+```env
+GEMINI_MODEL=gemini-3.1-flash-lite
+```
+
+The model is configured through the environment rather than being hard-coded, allowing it to be changed without modifying the application source code.
+
+### 8.4 Frontend Setup
+Open another terminal and navigate to:
+```bash
+cd src/frontend
+```
+Install frontend dependencies:
+```bash
+npm install
+```
+For a production deployment, ensure the frontend API configuration points to the deployed FastAPI backend rather than `127.0.0.1`.
+---
+## 9. Run
+
+### 9.1 Start the FastAPI Backend
+
+From the `src/backend` directory with the Python virtual environment activated:
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+The local API is normally available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Swagger / OpenAPI Documentation
+
+Open:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+FastAPI automatically provides interactive API documentation.
+
+---
+
+### 9.2 Start the React Frontend
+
+From the `src/frontend` directory:
+
+```bash
+npm run dev
+```
+
+Vite will display the local frontend address, typically:
+
+```text
+http://localhost:5173
+```
+
+---
+
+### 9.3 Production Build
+
+To verify that the frontend compiles successfully:
+
+```bash
+npm run build
+```
+
+---
+
+### 9.4 Main Backend API Endpoints
+
+#### Health Check
+
+```http
+GET /health
+```
+
+Used to verify that the backend service is running.
+
+---
+
+#### Production Forecast
+
+```http
+GET /production/forecast
+```
+
+The endpoint returns production intelligence such as:
+
+```json
+{
+  "prediction_date": "YYYY-MM-DD",
+  "classification": "YES",
+  "shortfall_risk": 1,
+  "shortfall_probability": 0.74,
+  "expected_production_lakh_tonnes": 2.70,
+  "forecast_production_lakh_tonnes": 2.35,
+  "predicted_shortfall_pct": 13.12,
+  "moil_weighted_rainfall_stress_index": 0.65,
+  "moil_weighted_soil_moisture_stress_index": 0.91,
+  "historical": []
+}
+```
+
+> Values above illustrate the response structure and should not be treated as permanently fixed predictions.
+
+---
+
+#### AI Recommendations
+
+```http
+GET /ai/recommendations
+```
+
+Example response structure:
+
+```json
+{
+  "overall_risk": "HIGH",
+  "summary": "Current production intelligence indicates elevated shortfall risk.",
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Production Planning",
+      "action": "Review production recovery options for the remaining period.",
+      "reason": "The production model currently indicates elevated shortfall probability."
+    }
+  ],
+  "source": "gemini"
+}
+```
+
+Possible source values include:
+
+```text
+gemini
+fallback_rules
+```
+
+The fallback mechanism enables the recommendation interface to remain functional if the external AI service is temporarily unavailable.
+
+---
+
+#### AI Conversational Endpoint
+
+```http
+POST /ai/chat
+```
+
+Example request:
+
+```json
+{
+  "message": "Explain the current production forecast and major risks."
+}
+```
+
+Example response:
+
+```json
+{
+  "answer": "The current model output indicates...",
+  "source": "gemini"
+}
+```
+
+The AI layer is instructed to remain grounded in information actually available to the backend.
+
+For example, if the available production model is MOIL-wide, the AI should not invent mine-specific shortfall predictions.
+
+---
+
+## 10. Deployment
+
+### 10.1 Backend – Render
+
+The FastAPI backend can be deployed through Render.
+
+The production environment must define server-side environment variables such as:
+
+```text
+GEMINI_API_KEY
+GEMINI_MODEL
+```
+
+The local `src/backend/.env` file is **not uploaded to Render**.
+
+### 10.2 Frontend – Vercel
+
+The React/Vite frontend can be deployed through Vercel.
+
+The deployed frontend must communicate with the deployed Render backend URL.
+
+### 10.3 Deployment Architecture
+
+```text
+                     INTERNET USER
+                           |
+                           v
+                  Vercel React Frontend
+                           |
+                         HTTPS
+                           |
+                           v
+                  Render FastAPI Backend
+                           |
+              +------------+------------+
+              |                         |
+              v                         v
+       Production ML Models        Gemini API
+              |
+              v
+        NASA POWER API
+```
+
+## 11. Future Scope
 
 MnVisionAI provides an extensible architecture that can be strengthened considerably when additional operational data becomes available.
 
@@ -449,7 +773,7 @@ MnVisionAI provides an extensible architecture that can be strengthened consider
 
 ---
 
-## Project Summary
+## 12. Project Summary
 
 **MnVisionAI** demonstrates an end-to-end approach for transforming mining, satellite, environmental, and production data into decision-support intelligence.
 
@@ -469,85 +793,5 @@ GENERATIVE AI
 MANGANESE MINING DECISION SUPPORT
 ```
 ---
-## Installation
-
-### Prerequisites
-
-Before running the project locally, install:
-
-- Git
-- Python
-- Node.js
-- npm
-
-A Gemini API key is required for live Gemini-powered AI functionality.
-
----
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/parthmalhotra-tech/MOIH-SIH.git
-cd MOIH-SIH
-```
-
----
-
-### Backend Setup
-
-Navigate to the backend:
-
-```bash
-cd backend
-```
-
-Create a virtual environment:
-
-```bash
-python -m venv .venv
-```
-
-#### Windows PowerShell
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-#### macOS / Linux
-
-```bash
-source .venv/bin/activate
-```
-
-Install backend dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-### Configure Gemini API
-
-Create:
-
-```text
-backend/.env
-```
-
-Add:
-
-```env
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL=YOUR_SUPPORTED_GEMINI_MODEL_ID
-```
-
-For example, if your Gemini API project supports the model used by the deployed application:
-
-```env
-GEMINI_MODEL=gemini-3.7-flash
-```
-
-The model is configured through the environment rather than being hard-coded, allowing it to be changed without modifying the application source code.
 
 
